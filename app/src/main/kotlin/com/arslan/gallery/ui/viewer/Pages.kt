@@ -229,7 +229,9 @@ fun VideoPage(
 
         if (playRequested && isCurrent && !inTransition) {
             VideoPlayer(medium = medium, chromeVisible = chromeVisible)
-        } else {
+        } else if (!(inTransition && isCurrent && (playRequested || prefs.autoplayVideos))) {
+            // Not shown while a video that is about to play flies in, it would only pop up and
+            // vanish again the moment the player takes over.
             BigPlayButton(
                 modifier = Modifier.align(Alignment.Center),
                 onClick = { playRequested = true },
