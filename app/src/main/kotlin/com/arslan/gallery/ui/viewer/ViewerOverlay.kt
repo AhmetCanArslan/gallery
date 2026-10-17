@@ -422,7 +422,8 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
                     VideoPage(
                         medium = medium,
                         isCurrent = isCurrent && pagerState.settledPage == page,
-                        inTransition = isOpening || isDragging,
+                        isOpening = isOpening,
+                        isDragging = isDragging,
                         chromeVisible = chromeVisible,
                         onToggleChrome = toggleChrome,
                     )

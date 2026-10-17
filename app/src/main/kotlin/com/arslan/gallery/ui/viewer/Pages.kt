@@ -202,7 +202,8 @@ private const val FULL_IMAGE_FADE_MS = 200
 fun VideoPage(
     medium: Medium,
     isCurrent: Boolean,
-    inTransition: Boolean,
+    isOpening: Boolean,
+    isDragging: Boolean,
     chromeVisible: Boolean,
     onToggleChrome: () -> Unit,
 ) {
@@ -210,10 +211,10 @@ fun VideoPage(
     val prefs = remember { context.prefs }
     var playRequested by remember(medium.path) { mutableStateOf(false) }
 
-    LaunchedEffect(isCurrent, inTransition) {
+    LaunchedEffect(isCurrent, isOpening) {
         if (!isCurrent) {
             playRequested = false
-        } else if (!inTransition && prefs.autoplayVideos) {
+        } else if (!isOpening && prefs.autoplayVideos) {
             playRequested = true
         }
     }
@@ -229,9 +230,10 @@ fun VideoPage(
     ) {
         Poster(medium = medium)
 
-        if (playRequested && isCurrent && !inTransition) {
-            VideoPlayer(medium = medium, chromeVisible = chromeVisible)
-        } else if (!(inTransition && isCurrent && (playRequested || prefs.autoplayVideos))) {
+        // The player stays while the video is dragged around, so letting go doesn't restart it.
+        if (playRequested && isCurrent && !isOpening) {
+            VideoPlayer(medium = medium, chromeVisible = chromeVisible, isDragging = isDragging)
+        } else if (!(isOpening && isCurrent && (playRequested || prefs.autoplayVideos))) {
             // Not shown while a video that is about to play flies in, it would only pop up and
             // vanish again the moment the player takes over.
             BigPlayButton(
@@ -273,7 +275,7 @@ private fun BigPlayButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @AndroidxOptIn(UnstableApi::class)
 @Composable
-private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
+private fun VideoPlayer(medium: Medium, chromeVisible: Boolean, isDragging: Boolean) {
     val context = LocalContext.current
     val view = LocalView.current
     val prefs = remember { context.prefs }
@@ -330,7 +332,7 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
         )
 
         AnimatedVisibility(
-            visible = chromeVisible || !isPlaying,
+            visible = !isDragging && (chromeVisible || !isPlaying),
             enter = fadeIn() + scaleIn(spring(dampingRatio = 0.5f), initialScale = 0.6f),
             exit = fadeOut() + scaleOut(targetScale = 0.6f),
             modifier = Modifier.align(Alignment.Center),
@@ -368,7 +370,7 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
         }
 
         AnimatedVisibility(
-            visible = chromeVisible,
+            visible = chromeVisible && !isDragging,
             enter = fadeIn() + slideInVertically(spring(dampingRatio = 0.75f)) { it / 2 },
             exit = fadeOut() + slideOutVertically { it / 2 },
             modifier = Modifier
