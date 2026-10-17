@@ -341,7 +341,6 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
             when {
                 dragOffset.y > dismissThreshold || velocity.y > 1800f -> close(velocity)
                 dragOffset.y < -dismissThreshold * 0.8f || velocity.y < -1800f -> {
-                    haptics.confirm()
                     showInfo = true
                     scope.launch {
                         animate(Offset.VectorConverter, dragOffset, Offset.Zero, animationSpec = spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMediumLow)) { v, _ -> dragOffset = v }
