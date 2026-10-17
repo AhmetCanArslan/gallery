@@ -82,7 +82,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.arslan.gallery.R
-import com.arslan.gallery.ui.components.rememberHaptics
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -170,11 +169,9 @@ fun EditorScreen(
 
 @Composable
 private fun ToolButton(state: EditState, tool: EditorTool, icon: androidx.compose.ui.graphics.vector.ImageVector, label: Int) {
-    val haptics = rememberHaptics()
     FilledIconToggleButton(
         checked = state.tool == tool,
         onCheckedChange = {
-            if (state.tool != tool) haptics.toggle(true)
             state.tool = tool
         },
     ) {
@@ -440,7 +437,6 @@ private fun ToolPanel(state: EditState) {
 
 @Composable
 private fun CropPanel(state: EditState) {
-    val haptics = rememberHaptics()
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             FilledTonalIconButton(onClick = {
@@ -463,7 +459,6 @@ private fun CropPanel(state: EditState) {
                 FilterChip(
                     selected = state.cropRatio == ratio,
                     onClick = {
-                        haptics.tick()
                         state.setRatio(ratio)
                     },
                     label = {
@@ -479,7 +474,6 @@ private fun CropPanel(state: EditState) {
 
 @Composable
 private fun FilterPanel(state: EditState) {
-    val haptics = rememberHaptics()
     val preview = remember(state.source) { previewBitmap(state.source) }
     Row(
         modifier = Modifier
@@ -494,7 +488,6 @@ private fun FilterPanel(state: EditState) {
                 modifier = Modifier
                     .clip(RoundedCornerShape(18.dp))
                     .clickable {
-                        haptics.tick()
                         state.filter = filter
                     }
                     .padding(4.dp),
@@ -548,7 +541,6 @@ private fun previewBitmap(source: Bitmap): ImageBitmap {
 
 @Composable
 private fun AdjustPanel(state: EditState) {
-    val haptics = rememberHaptics()
     var selected by remember { mutableStateOf(Adjustment.Brightness) }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(
@@ -561,7 +553,6 @@ private fun AdjustPanel(state: EditState) {
                 FilterChip(
                     selected = selected == type,
                     onClick = {
-                        haptics.tick()
                         selected = type
                     },
                     label = {

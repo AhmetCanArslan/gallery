@@ -77,7 +77,6 @@ import com.arslan.gallery.data.TYPE_RAW
 import com.arslan.gallery.data.TYPE_VIDEO
 import com.arslan.gallery.data.prefs
 import com.arslan.gallery.ui.LocalGalleryActivity
-import com.arslan.gallery.ui.components.rememberHaptics
 
 sealed interface GallerySheet {
     data class Sort(val forAlbums: Boolean) : GallerySheet
@@ -123,14 +122,12 @@ private fun <T> SegmentedChoices(
     selected: T,
     onSelect: (T) -> Unit,
 ) {
-    val haptics = rememberHaptics()
     Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
         options.forEachIndexed { index, (value, label) ->
             val isSelected = value == selected
             SegmentedListItem(
                 selected = isSelected,
                 onClick = {
-                    if (!isSelected) haptics.tick()
                     onSelect(value)
                 },
                 shapes = ListItemDefaults.segmentedShapes(index = index, count = options.size),
@@ -150,7 +147,6 @@ private fun <T> SegmentedChoices(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun OrderToggle(descending: Boolean, onChange: (Boolean) -> Unit) {
-    val haptics = rememberHaptics()
     Row(
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
         modifier = Modifier.fillMaxWidth(),
@@ -158,7 +154,6 @@ private fun OrderToggle(descending: Boolean, onChange: (Boolean) -> Unit) {
         ToggleButton(
             checked = !descending,
             onCheckedChange = {
-                haptics.toggle(true)
                 onChange(false)
             },
             shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
@@ -171,7 +166,6 @@ private fun OrderToggle(descending: Boolean, onChange: (Boolean) -> Unit) {
         ToggleButton(
             checked = descending,
             onCheckedChange = {
-                haptics.toggle(true)
                 onChange(true)
             },
             shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
@@ -246,7 +240,6 @@ private fun GroupSheet(allowFolders: Boolean, onDismiss: () -> Unit, onChanged: 
 @Composable
 private fun FilterSheet(onDismiss: () -> Unit, onChanged: () -> Unit) {
     val prefs = LocalGalleryActivity.current.prefs
-    val haptics = rememberHaptics()
     val initial = remember { prefs.filter }
     var filter by remember { mutableIntStateOf(initial) }
 
@@ -276,7 +269,6 @@ private fun FilterSheet(onDismiss: () -> Unit, onChanged: () -> Unit) {
                 FilterChip(
                     selected = selected,
                     onClick = {
-                        haptics.toggle(!selected)
                         filter = filter xor type
                     },
                     label = { Text(stringResource(label)) },

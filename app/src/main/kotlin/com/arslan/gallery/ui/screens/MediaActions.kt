@@ -172,7 +172,6 @@ fun ToolbarTab(
     label: String,
     onClick: () -> Unit,
 ) {
-    val haptics = rememberHaptics()
     val interactionSource = remember { MutableInteractionSource() }
     val background by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Transparent,
@@ -197,10 +196,7 @@ fun ToolbarTab(
             .pressScale(interactionSource, 0.92f)
             .height(48.dp)
             .background(background, CircleShape)
-            .clickable(interactionSource = interactionSource, indication = ripple(bounded = false)) {
-                if (!selected) haptics.toggle(true)
-                onClick()
-            }
+            .clickable(interactionSource = interactionSource, indication = ripple(bounded = false), onClick = onClick)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

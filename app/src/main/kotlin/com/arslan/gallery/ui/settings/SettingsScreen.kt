@@ -284,7 +284,6 @@ fun LinkItem(icon: ImageVector, title: String, summary: String?, onClick: () -> 
 @Composable
 private fun ThemeChooser() {
     val context = LocalGalleryActivity.current
-    val haptics = rememberHaptics()
     val options = listOf(
         Triple(THEME_SYSTEM, R.string.theme_system, Icons.Rounded.BrightnessAuto),
         Triple(THEME_LIGHT, R.string.theme_light, Icons.Rounded.LightMode),
@@ -305,7 +304,6 @@ private fun ThemeChooser() {
                 ToggleButton(
                     checked = Appearance.theme == value,
                     onCheckedChange = {
-                        haptics.toggle(true)
                         Appearance.theme = value
                         context.prefs.theme = value
                     },
