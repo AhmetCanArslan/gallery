@@ -1,8 +1,0 @@
-Added:
-
-• Option to overwrite the original image when saving edits 
-
-Changed:
-
-• Updated translations
-

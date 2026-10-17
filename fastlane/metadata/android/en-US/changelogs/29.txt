@@ -1,5 +1,0 @@
-Changed:
-
-• Compatibility with newer Android devices using 16KB pages
-• Updated translations
-
