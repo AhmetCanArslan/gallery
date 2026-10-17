@@ -10,7 +10,8 @@ import androidx.compose.ui.platform.LocalView
 
 /**
  * Thin wrapper around [View.performHapticFeedback] that picks the richest constant the running
- * platform supports, so every interaction gets a fitting, subtle vibration.
+ * platform supports. Only meaningful moments vibrate (long presses, toggles, thresholds,
+ * confirmations), plain taps and the start or end of gestures stay silent.
  */
 @Stable
 class Haptics(private val view: View) {
