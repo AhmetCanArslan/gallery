@@ -318,6 +318,8 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
             player = player,
             surfaceType = SURFACE_TYPE_TEXTURE_VIEW,
             contentScale = ContentScale.Fit,
+            // No black shutter until the first frame, the poster below shows meanwhile.
+            shutter = {},
             modifier = Modifier.fillMaxSize(),
         )
 
