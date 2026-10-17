@@ -294,9 +294,10 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
 
     DisposableEffect(player) {
         val listener = object : Player.Listener {
-            override fun onIsPlayingChanged(playing: Boolean) {
-                isPlaying = playing
-                view.keepScreenOn = playing
+            override fun onEvents(player: Player, events: Player.Events) {
+                // Whether the video is meant to play, buffering or scrubbing don't count as a pause.
+                isPlaying = player.isMeantToPlay
+                view.keepScreenOn = isPlaying
             }
         }
         player.addListener(listener)
@@ -343,7 +344,7 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
                     .clip(if (isPlaying) MaterialShapes.Square.toShape() else MaterialShapes.Cookie7Sided.toShape())
                     .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
                     .clickable {
-                        if (player.isPlaying) {
+                        if (player.isMeantToPlay) {
                             player.pause()
                         } else {
                             if (player.playbackState == Player.STATE_ENDED) player.seekTo(0)
@@ -421,6 +422,9 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
         }
     }
 }
+
+private val Player.isMeantToPlay: Boolean
+    get() = playWhenReady && playbackState != Player.STATE_ENDED && playbackState != Player.STATE_IDLE
 
 /**
  * Heart that pops with an overshooting spring and sprays a small ring of particles when liked.
