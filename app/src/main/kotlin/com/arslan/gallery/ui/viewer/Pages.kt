@@ -206,7 +206,6 @@ fun VideoPage(
 ) {
     val context = LocalContext.current
     val prefs = remember { context.prefs }
-    val haptics = rememberHaptics()
     var playRequested by remember(medium.path) { mutableStateOf(false) }
 
     LaunchedEffect(isCurrent, inTransition) {
@@ -233,10 +232,7 @@ fun VideoPage(
         } else {
             BigPlayButton(
                 modifier = Modifier.align(Alignment.Center),
-                onClick = {
-                    haptics.confirm()
-                    playRequested = true
-                },
+                onClick = { playRequested = true },
             )
         }
     }
@@ -276,7 +272,6 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
     val context = LocalContext.current
     val view = LocalView.current
     val prefs = remember { context.prefs }
-    val haptics = rememberHaptics()
 
     val player = remember(medium.path) {
         ExoPlayer.Builder(context).build().apply {
@@ -344,7 +339,6 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
                     .clip(if (isPlaying) MaterialShapes.Square.toShape() else MaterialShapes.Cookie7Sided.toShape())
                     .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
                     .clickable {
-                        haptics.toggle(!isPlaying)
                         if (player.isPlaying) {
                             player.pause()
                         } else {
@@ -411,7 +405,6 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
                 )
                 IconButton(onClick = {
                     muted = !muted
-                    haptics.toggle(!muted)
                     player.volume = if (muted) 0f else 1f
                 }) {
                     Icon(
