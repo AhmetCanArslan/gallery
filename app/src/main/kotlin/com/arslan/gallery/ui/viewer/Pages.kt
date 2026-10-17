@@ -110,18 +110,22 @@ private fun Poster(medium: Medium, modifier: Modifier = Modifier) {
     val viewer = LocalViewer.current
     val painter = rememberAsyncImagePainter(remember(medium.signature) { thumbnailRequest(context, medium) })
     val painterState by painter.state.collectAsState()
-    val ratio = (painterState as? AsyncImagePainter.State.Success)?.painter?.intrinsicSize?.let {
+    val loadedRatio = (painterState as? AsyncImagePainter.State.Success)?.painter?.intrinsicSize?.let {
         if (it.width > 0 && it.height > 0) it.width / it.height else null
     }
-    LaunchedEffect(ratio) {
-        if (ratio != null) viewer.setAspect(medium.path, Size(ratio, 1f))
+    LaunchedEffect(loadedRatio) {
+        if (loadedRatio != null) viewer.setAspect(medium.path, Size(loadedRatio, 1f))
     }
+    // The painter already draws a few frames before its state reports the size, the grid usually
+    // knows the aspect by then. Without either it's fitted, cropping to the whole screen would show
+    // the photo zoomed in on its way out of the thumbnail.
+    val ratio = loadedRatio ?: viewer.aspects[medium.path]
 
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Image(
             painter = painter,
             contentDescription = null,
-            contentScale = ContentScale.Crop,
+            contentScale = if (ratio != null) ContentScale.Crop else ContentScale.Fit,
             modifier = if (ratio != null) Modifier.aspectRatio(ratio) else Modifier.fillMaxSize(),
         )
     }
