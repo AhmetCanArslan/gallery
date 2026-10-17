@@ -61,22 +61,6 @@ class Haptics(private val view: View) {
         }
     )
 
-    fun gestureStart() = perform(
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            HapticFeedbackConstants.GESTURE_START
-        } else {
-            HapticFeedbackConstants.CLOCK_TICK
-        }
-    )
-
-    fun gestureEnd() = perform(
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            HapticFeedbackConstants.GESTURE_END
-        } else {
-            HapticFeedbackConstants.CLOCK_TICK
-        }
-    )
-
     private fun perform(constant: Int) {
         view.performHapticFeedback(constant)
     }

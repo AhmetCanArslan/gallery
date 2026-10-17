@@ -58,7 +58,6 @@ fun Modifier.pinchToChangeColumns(
                     if (pressed >= 2) {
                         if (!pinching) {
                             pinching = true
-                            haptics.gestureStart()
                         }
                         val zoom = event.calculateZoom()
                         accumulated *= zoom

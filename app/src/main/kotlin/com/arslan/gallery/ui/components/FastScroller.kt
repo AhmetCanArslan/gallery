@@ -121,13 +121,11 @@ fun FastScroller(
                         detectVerticalDragGestures(
                             onDragStart = { offset ->
                                 dragging = true
-                                haptics.gestureStart()
                                 dragFraction = (offset.y / trackHeightPx).coerceIn(0f, 1f)
                                 scope.launch { gridState.scrollToItem((dragFraction * (totalItems - 1)).roundToInt()) }
                             },
                             onDragEnd = {
                                 dragging = false
-                                haptics.gestureEnd()
                             },
                             onDragCancel = { dragging = false },
                             onVerticalDrag = { change, delta ->

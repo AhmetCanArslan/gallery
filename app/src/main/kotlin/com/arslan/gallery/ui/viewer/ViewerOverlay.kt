@@ -301,7 +301,6 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
         }
 
         val close: (velocity: Offset) -> Unit = { velocity ->
-            haptics.gestureEnd()
             val medium = currentMedia.getOrNull(pagerState.currentPage)
             viewer.close(
                 medium?.let {
@@ -399,7 +398,6 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
                                 if (abs(total.y) > slop && abs(total.y) > abs(total.x) * 1.4f && abs(pagerState.currentPageOffsetFraction) < 0.01f) {
                                     dragging = true
                                     isDragging = true
-                                    haptics.gestureStart()
                                 } else if (abs(total.x) > slop) {
                                     break
                                 }

@@ -391,7 +391,6 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
                 Slider(
                     value = if (seeking) seekValue else if (duration > 0) position.toFloat() / duration else 0f,
                     onValueChange = {
-                        if (!seeking) haptics.gestureStart()
                         seeking = true
                         seekValue = it
                     },
@@ -399,7 +398,6 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
                         player.seekTo((seekValue * duration).toLong())
                         position = (seekValue * duration).toLong()
                         seeking = false
-                        haptics.gestureEnd()
                     },
                     colors = SliderDefaults.colors(),
                     modifier = Modifier
