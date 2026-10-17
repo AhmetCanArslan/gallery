@@ -73,8 +73,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.annotation.OptIn as AndroidxOptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.compose.ContentFrame
 import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
@@ -269,6 +271,7 @@ private fun BigPlayButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@AndroidxOptIn(UnstableApi::class)
 @Composable
 private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
     val context = LocalContext.current
@@ -389,11 +392,15 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean) {
                 )
                 Slider(
                     value = if (seeking) seekValue else if (duration > 0) position.toFloat() / duration else 0f,
+                    // Seeks along while dragging, so the frame follows the thumb.
                     onValueChange = {
+                        if (!seeking) player.isScrubbingModeEnabled = true
                         seeking = true
                         seekValue = it
+                        player.seekTo((it * duration).toLong())
                     },
                     onValueChangeFinished = {
+                        player.isScrubbingModeEnabled = false
                         player.seekTo((seekValue * duration).toLong())
                         position = (seekValue * duration).toLong()
                         seeking = false
