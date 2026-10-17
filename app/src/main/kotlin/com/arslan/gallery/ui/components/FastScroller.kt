@@ -59,7 +59,6 @@ fun FastScroller(
 ) {
     if (totalItems < 40) return
 
-    val haptics = rememberHaptics()
     val scope = rememberCoroutineScope()
     var dragging by remember { mutableStateOf(false) }
     var dragFraction by remember { mutableFloatStateOf(0f) }
@@ -86,9 +85,6 @@ fun FastScroller(
 
     val fraction = if (dragging) dragFraction else scrollFraction
     val label = labelFor((fraction * (totalItems - 1)).roundToInt())
-    LaunchedEffect(label) {
-        if (dragging) haptics.tick()
-    }
 
     val thumbHeight = 52.dp
     val thumbWidth by animateDpAsState(
