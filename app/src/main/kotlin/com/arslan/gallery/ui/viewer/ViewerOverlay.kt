@@ -607,6 +607,9 @@ private fun ViewerBottomToolbar(medium: Medium, onInfo: () -> Unit) {
                 ToolbarIcon(Icons.Rounded.Edit, stringResource(R.string.edit)) {
                     activity.edit(medium.path)
                 }
+                ToolbarIcon(Icons.Rounded.ContentCopy, stringResource(R.string.copy_to_clipboard)) {
+                    activity.copyToClipboard(medium.path)
+                }
             }
             if (!medium.isUri) {
                 FavoriteButton(
