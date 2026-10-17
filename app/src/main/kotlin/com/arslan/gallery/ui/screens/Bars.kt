@@ -41,15 +41,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.arslan.gallery.R
 import com.arslan.gallery.ui.components.rememberHaptics
 
 /**
- * Text that nudges up or down when [count] changes. A single text with a single animation that
- * restarts on every change, so a drag selection changing it every few frames never piles up
- * transitions (or measures the app bar again).
+ * "N selected" where only the number nudges up or down when [count] changes, the words around it
+ * stay put. A single animation that restarts on every change, so a drag selection changing it every
+ * few frames never piles up transitions. Tabular digits keep the words from wobbling sideways while
+ * the number of digits stays the same.
  */
 @Composable
 fun AnimatedCount(count: Int, modifier: Modifier = Modifier) {
@@ -63,14 +67,25 @@ fun AnimatedCount(count: Int, modifier: Modifier = Modifier) {
             nudge.animateTo(0f, spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMedium))
         }
     }
-    Text(
-        text = pluralStringResource(R.plurals.n_selected, count, count),
-        modifier = modifier.graphicsLayer {
-            val value = nudge.value
-            translationY = value * size.height * 0.5f
-            alpha = 1f - abs(value).coerceAtMost(1f) * 0.7f
-        },
-    )
+    val nudged = Modifier.graphicsLayer {
+        val value = nudge.value
+        translationY = value * size.height * 0.5f
+        alpha = 1f - abs(value).coerceAtMost(1f) * 0.7f
+    }
+    val text = pluralStringResource(R.plurals.n_selected, count, count)
+    val number = String.format(LocalConfiguration.current.locales[0], "%d", count)
+    val start = text.indexOf(number)
+    // A translation may spell the number out, then the whole text nudges.
+    if (start < 0) {
+        Text(text, modifier.then(nudged), maxLines = 1)
+        return
+    }
+    val style = LocalTextStyle.current.merge(TextStyle(fontFeatureSettings = "tnum"))
+    Row(modifier) {
+        if (start > 0) Text(text.substring(0, start), style = style, maxLines = 1)
+        Text(number, nudged, style = style, maxLines = 1)
+        if (start + number.length < text.length) Text(text.substring(start + number.length), style = style, maxLines = 1)
+    }
 }
 
 data class MenuAction(
