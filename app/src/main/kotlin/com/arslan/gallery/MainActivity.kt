@@ -2,6 +2,7 @@ package com.arslan.gallery
 
 import android.Manifest
 import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -291,6 +292,13 @@ open class MainActivity : ComponentActivity() {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         startChooser(intent, R.string.share)
+    }
+
+    fun copyToClipboard(path: String) {
+        val clipboard = getSystemService(ClipboardManager::class.java) ?: return
+        clipboard.setPrimaryClip(ClipData.newUri(contentResolver, path.filename, shareUri(path)))
+        // Android 13+ shows its own confirmation for clipboard changes.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) toast(R.string.copied_to_clipboard)
     }
 
     fun setFavorite(paths: Collection<String>, isFavorite: Boolean) = viewModel.setFavorite(paths, isFavorite)
