@@ -190,7 +190,6 @@ fun AlbumScreen(
                             }
                         } else {
                             IconButton(onClick = {
-                                haptics.tap()
                                 navigator.pop()
                             }) {
                                 Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back))
@@ -208,7 +207,6 @@ fun AlbumScreen(
                         Row {
                             if (isSelecting) {
                                 IconButton(onClick = {
-                                    haptics.tap()
                                     selection = state.media.map { it.path }.toSet()
                                 }) {
                                     Icon(Icons.Rounded.SelectAll, stringResource(R.string.select_all))
@@ -216,7 +214,6 @@ fun AlbumScreen(
                             } else {
                                 if (state.media.isNotEmpty() && !isTrash && activity.pickRequest == null) {
                                     IconButton(onClick = {
-                                        haptics.tap()
                                         viewer.open(path, state.media.first().path, slideshow = true)
                                     }) {
                                         Icon(Icons.Rounded.Slideshow, stringResource(R.string.slideshow))

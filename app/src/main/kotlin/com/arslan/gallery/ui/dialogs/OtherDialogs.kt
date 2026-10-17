@@ -215,7 +215,6 @@ fun PickFolderDialog(dialog: AppDialog.PickFolder, onDismiss: () -> Unit) {
                                 cover = { Icon(Icons.Rounded.CreateNewFolder, null, tint = MaterialTheme.colorScheme.onPrimaryContainer) },
                                 highlighted = true,
                                 onClick = {
-                                    haptics.tap()
                                     creating = true
                                 },
                             )

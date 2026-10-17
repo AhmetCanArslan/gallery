@@ -47,7 +47,6 @@ fun Modifier.pressScale(
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.expressiveClickable(
     pressedScale: Float = 0.94f,
-    hapticOnClick: Boolean = true,
     enabled: Boolean = true,
     onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
@@ -66,10 +65,7 @@ fun Modifier.expressiveClickable(
                     it()
                 }
             },
-            onClick = {
-                if (hapticOnClick) haptics.tap()
-                onClick()
-            },
+            onClick = onClick,
         )
 }
 

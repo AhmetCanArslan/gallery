@@ -47,7 +47,6 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.arslan.gallery.R
-import com.arslan.gallery.ui.components.rememberHaptics
 
 /**
  * "N selected" where only the number nudges up or down when [count] changes, the words around it
@@ -101,10 +100,8 @@ fun OverflowMenu(
     icon: ImageVector = Icons.Rounded.MoreVert,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val haptics = rememberHaptics()
     Box(modifier) {
         IconButton(onClick = {
-            haptics.tap()
             expanded = true
         }) {
             Icon(icon, contentDescription = stringResource(R.string.more_options))

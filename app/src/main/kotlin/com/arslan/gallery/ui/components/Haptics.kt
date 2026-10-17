@@ -15,9 +15,6 @@ import androidx.compose.ui.platform.LocalView
 @Stable
 class Haptics(private val view: View) {
 
-    /** Light tick for taps on buttons and items. */
-    fun tap() = perform(HapticFeedbackConstants.CONTEXT_CLICK)
-
     /** Very light tick for repeated changes like column count steps or selection while dragging. */
     fun tick() = perform(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

@@ -275,11 +275,7 @@ private fun PrefSwitch(icon: ImageVector, title: String, summary: String?, initi
 
 @Composable
 fun LinkItem(icon: ImageVector, title: String, summary: String?, onClick: () -> Unit) {
-    val haptics = rememberHaptics()
-    ItemRow(icon, title, summary, onClick = {
-        haptics.tap()
-        onClick()
-    }) {
+    ItemRow(icon, title, summary, onClick = onClick) {
         Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

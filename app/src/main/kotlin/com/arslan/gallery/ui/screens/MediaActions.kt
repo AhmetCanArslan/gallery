@@ -149,13 +149,9 @@ private fun PickSelectionToolbar(selectedMedia: () -> List<Medium>, modifier: Mo
 
 @Composable
 fun ToolbarIcon(icon: ImageVector, label: String, enabled: Boolean = true, onClick: () -> Unit) {
-    val haptics = rememberHaptics()
     val interactionSource = remember { MutableInteractionSource() }
     IconButton(
-        onClick = {
-            haptics.tap()
-            onClick()
-        },
+        onClick = onClick,
         enabled = enabled,
         interactionSource = interactionSource,
         modifier = Modifier.pressScale(interactionSource, 0.85f),

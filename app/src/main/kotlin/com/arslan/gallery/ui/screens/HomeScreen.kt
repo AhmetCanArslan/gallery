@@ -262,7 +262,6 @@ fun HomeScreen(viewModel: GalleryViewModel) {
                         Row {
                             if (isSelecting) {
                                 IconButton(onClick = {
-                                    haptics.tap()
                                     if (tab == TAB_ALBUMS) {
                                         albumSelection = dirs.map { it.path }.toSet()
                                     } else {

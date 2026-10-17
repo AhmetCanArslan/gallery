@@ -394,7 +394,6 @@ private fun dragCrop(state: EditState, mode: CropDrag, drag: Offset, image: Rect
 
 @Composable
 private fun BrushColorRow(selected: Color, onSelect: (Color) -> Unit, modifier: Modifier = Modifier) {
-    val haptics = rememberHaptics()
     Row(
         modifier = modifier
             .clip(CircleShape)
@@ -410,7 +409,6 @@ private fun BrushColorRow(selected: Color, onSelect: (Color) -> Unit, modifier: 
                     .background(color)
                     .border(2.dp, if (color == selected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.3f), CircleShape)
                     .clickable {
-                        haptics.tap()
                         onSelect(color)
                     },
             )
@@ -446,15 +444,12 @@ private fun CropPanel(state: EditState) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             FilledTonalIconButton(onClick = {
-                haptics.tap()
                 state.rotate(-90)
             }) { Icon(Icons.AutoMirrored.Rounded.RotateLeft, stringResource(R.string.rotate_left)) }
             FilledTonalIconButton(onClick = {
-                haptics.tap()
                 state.flip()
             }) { Icon(Icons.Rounded.Flip, stringResource(R.string.flip)) }
             FilledTonalIconButton(onClick = {
-                haptics.tap()
                 state.resetGeometry()
             }) { Icon(Icons.Rounded.RestartAlt, stringResource(R.string.reset)) }
         }
@@ -595,7 +590,6 @@ private fun AdjustPanel(state: EditState) {
                 modifier = Modifier.weight(1f),
             )
             IconButton(onClick = {
-                haptics.tap()
                 state.setAdjustment(selected, 0f)
             }) {
                 Icon(Icons.Rounded.RestartAlt, stringResource(R.string.reset), tint = Color.White)
@@ -606,7 +600,6 @@ private fun AdjustPanel(state: EditState) {
 
 @Composable
 private fun DrawPanel(state: EditState) {
-    val haptics = rememberHaptics()
     Row(
         modifier = Modifier.padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -622,7 +615,6 @@ private fun DrawPanel(state: EditState) {
         )
         FilledTonalIconButton(
             onClick = {
-                haptics.tap()
                 state.strokes.removeLastOrNull()
             },
             enabled = state.strokes.isNotEmpty(),
