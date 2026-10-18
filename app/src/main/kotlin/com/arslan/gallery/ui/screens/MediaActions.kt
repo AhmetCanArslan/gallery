@@ -1,6 +1,7 @@
 package com.arslan.gallery.ui.screens
 
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Button
 import androidx.compose.animation.animateColorAsState
@@ -99,6 +100,9 @@ fun MediaSelectionToolbar(
 
         ToolbarIcon(Icons.Rounded.Share, stringResource(R.string.share)) {
             activity.share(paths())
+        }
+        ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_tailscale), stringResource(R.string.send_via_tailscale)) {
+            activity.sendViaTailscale(paths())
         }
         ToolbarIcon(
             icon = if (allFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,

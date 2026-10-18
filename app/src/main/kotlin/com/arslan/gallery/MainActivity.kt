@@ -279,9 +279,23 @@ open class MainActivity : ComponentActivity() {
 
     fun share(paths: Collection<String>) {
         if (paths.isEmpty()) return
+        startChooser(sendIntent(paths), R.string.share)
+    }
+
+    /** Opens Tailscale's Taildrop device picker directly, skipping the system share sheet. */
+    fun sendViaTailscale(paths: Collection<String>) {
+        if (paths.isEmpty()) return
+        try {
+            startActivity(sendIntent(paths).setPackage(TAILSCALE_PACKAGE))
+        } catch (e: ActivityNotFoundException) {
+            toast(R.string.tailscale_not_installed)
+        }
+    }
+
+    private fun sendIntent(paths: Collection<String>): Intent {
         val uris = ArrayList(paths.map(::shareUri))
         val types = paths.map { it.mimeType() }.distinct()
-        val intent = Intent().apply {
+        return Intent().apply {
             if (uris.size == 1) {
                 action = Intent.ACTION_SEND
                 putExtra(Intent.EXTRA_STREAM, uris.first())
@@ -291,22 +305,6 @@ open class MainActivity : ComponentActivity() {
             }
             type = types.singleOrNull() ?: if (types.all { it.startsWith("video") }) "video/*" else if (types.all { it.startsWith("image") }) "image/*" else "*/*"
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        startChooser(intent, R.string.share)
-    }
-
-    /** Opens Tailscale's Taildrop device picker directly, skipping the system share sheet. */
-    fun sendViaTailscale(path: String) {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            setPackage(TAILSCALE_PACKAGE)
-            type = path.mimeType()
-            putExtra(Intent.EXTRA_STREAM, shareUri(path))
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        try {
-            startActivity(intent)
-        } catch (e: ActivityNotFoundException) {
-            toast(R.string.tailscale_not_installed)
         }
     }
 

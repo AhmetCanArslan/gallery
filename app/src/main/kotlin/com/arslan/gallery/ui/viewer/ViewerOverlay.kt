@@ -606,7 +606,7 @@ private fun ViewerBottomToolbar(medium: Medium, onInfo: () -> Unit) {
                 activity.share(listOf(medium.path))
             }
             ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_tailscale), stringResource(R.string.send_via_tailscale)) {
-                activity.sendViaTailscale(medium.path)
+                activity.sendViaTailscale(listOf(medium.path))
             }
             if (!medium.isVideo) {
                 ToolbarIcon(Icons.Rounded.Edit, stringResource(R.string.edit)) {
