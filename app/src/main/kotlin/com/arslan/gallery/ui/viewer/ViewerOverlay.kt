@@ -86,6 +86,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -94,6 +95,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -602,6 +604,9 @@ private fun ViewerBottomToolbar(medium: Medium, onInfo: () -> Unit) {
         } else {
             ToolbarIcon(Icons.Rounded.Share, stringResource(R.string.share)) {
                 activity.share(listOf(medium.path))
+            }
+            ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_tailscale), stringResource(R.string.send_via_tailscale)) {
+                activity.sendViaTailscale(medium.path)
             }
             if (!medium.isVideo) {
                 ToolbarIcon(Icons.Rounded.Edit, stringResource(R.string.edit)) {

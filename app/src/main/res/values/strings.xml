@@ -32,6 +32,8 @@
     <string name="copy_to">Copy to</string>
     <string name="copy_to_clipboard">Copy to clipboard</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
+    <string name="send_via_tailscale">Send via Tailscale</string>
+    <string name="tailscale_not_installed">Tailscale is not installed</string>
     <string name="move_to">Move to</string>
     <string name="set_as">Set as</string>
     <string name="open_with">Open with</string>

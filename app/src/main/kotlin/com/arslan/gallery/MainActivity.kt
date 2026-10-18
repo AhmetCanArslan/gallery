@@ -1,6 +1,7 @@
 package com.arslan.gallery
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
@@ -294,6 +295,21 @@ open class MainActivity : ComponentActivity() {
         startChooser(intent, R.string.share)
     }
 
+    /** Opens Tailscale's Taildrop device picker directly, skipping the system share sheet. */
+    fun sendViaTailscale(path: String) {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            setPackage(TAILSCALE_PACKAGE)
+            type = path.mimeType()
+            putExtra(Intent.EXTRA_STREAM, shareUri(path))
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        try {
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            toast(R.string.tailscale_not_installed)
+        }
+    }
+
     fun copyToClipboard(path: String) {
         val clipboard = getSystemService(ClipboardManager::class.java) ?: return
         clipboard.setPrimaryClip(ClipData.newUri(contentResolver, path.filename, shareUri(path)))
@@ -543,6 +559,7 @@ open class MainActivity : ComponentActivity() {
     companion object {
         private const val PROCESSING_TIMEOUT_MS = 30_000L
         private const val POLL_INTERVAL_MS = 250L
+        private const val TAILSCALE_PACKAGE = "com.tailscale.ipn"
     }
 }
 

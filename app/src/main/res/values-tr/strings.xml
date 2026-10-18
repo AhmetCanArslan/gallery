@@ -32,6 +32,8 @@
     <string name="copy_to">Kopyala</string>
     <string name="copy_to_clipboard">Panoya kopyala</string>
     <string name="copied_to_clipboard">Panoya kopyalandı</string>
+    <string name="send_via_tailscale">Tailscale ile gönder</string>
+    <string name="tailscale_not_installed">Tailscale yüklü değil</string>
     <string name="move_to">Taşı</string>
     <string name="set_as">Farklı ayarla</string>
     <string name="open_with">Birlikte aç</string>
