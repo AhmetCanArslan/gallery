@@ -43,7 +43,6 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.DriveFileRenameOutline
-import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.PhotoSizeSelectLarge
 import androidx.compose.material.icons.rounded.RestoreFromTrash
@@ -473,10 +472,7 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
                 .padding(bottom = 16.dp),
         ) {
             currentMedium?.let { medium ->
-                ViewerBottomToolbar(
-                    medium = medium,
-                    onInfo = { showInfo = true },
-                )
+                ViewerBottomToolbar(medium = medium)
             }
         }
     }
@@ -587,7 +583,7 @@ private fun ViewerTopBar(medium: Medium, onBack: () -> Unit, onSlideshow: () -> 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ViewerBottomToolbar(medium: Medium, onInfo: () -> Unit) {
+private fun ViewerBottomToolbar(medium: Medium) {
     val activity = LocalGalleryActivity.current
 
     HorizontalFloatingToolbar(
@@ -623,7 +619,6 @@ private fun ViewerBottomToolbar(medium: Medium, onInfo: () -> Unit) {
                 )
             }
         }
-        ToolbarIcon(Icons.Rounded.Info, stringResource(R.string.details), onClick = onInfo)
         if (!medium.isUri) {
             ToolbarIcon(
                 if (medium.isInTrash) Icons.Rounded.DeleteForever else Icons.Rounded.DeleteOutline,
