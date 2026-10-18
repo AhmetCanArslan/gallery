@@ -108,7 +108,9 @@ import kotlin.math.sin
 private fun Poster(medium: Medium, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val viewer = LocalViewer.current
-    val painter = rememberAsyncImagePainter(remember(medium.signature) { thumbnailRequest(context, medium) })
+    // No crossfade: when the thumbnail misses the memory cache, as on the first open after a cold start,
+    // it would fade in over the black backdrop and the photo would fly in darkened.
+    val painter = rememberAsyncImagePainter(remember(medium.signature) { thumbnailRequest(context, medium, crossfade = false) })
     val painterState by painter.state.collectAsState()
     val loadedRatio = (painterState as? AsyncImagePainter.State.Success)?.painter?.intrinsicSize?.let {
         if (it.width > 0 && it.height > 0) it.width / it.height else null
