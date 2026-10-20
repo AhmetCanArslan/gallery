@@ -329,11 +329,28 @@ open class MainActivity : ComponentActivity() {
 
         withWriteAccess {
             if (prefs.confirmDelete) {
-                dialogs.show(AppDialog.DeleteMedia(items, canUseTrash) { toTrash -> performDelete(items, toTrash, onDeleted) })
+                dialogs.show(AppDialog.DeleteMedia(items, canUseTrash) { toTrash -> confirmDelete(items, canUseTrash, toTrash, onDeleted) })
             } else {
                 performDelete(items, canUseTrash, onDeleted)
             }
         }
+    }
+
+    /** Skipping the trash when it was on offer is easy to tap by mistake, so that asks once more. */
+    private fun confirmDelete(items: List<Medium>, canUseTrash: Boolean, toTrash: Boolean, onDeleted: (List<String>) -> Unit) {
+        if (toTrash || !canUseTrash) {
+            performDelete(items, toTrash, onDeleted)
+            return
+        }
+        dialogs.show(
+            AppDialog.Confirm(
+                icon = Icons.Rounded.DeleteForever,
+                title = resources.getQuantityString(R.plurals.delete_n_permanently_question, items.size, items.size),
+                message = getString(R.string.delete_permanently_hint),
+                confirmLabel = getString(R.string.delete_permanently),
+                destructive = true,
+            ) { performDelete(items, toTrash = false, onDeleted) }
+        )
     }
 
     private fun performDelete(items: List<Medium>, toTrash: Boolean, onDeleted: (List<String>) -> Unit) {
@@ -547,7 +564,7 @@ open class MainActivity : ComponentActivity() {
         val media = albumMedia(albums.map { it.path })
         if (media.isEmpty()) return
         withWriteAccess {
-            dialogs.show(AppDialog.DeleteAlbums(albums, prefs.useTrash) { toTrash -> performDelete(media, toTrash) {} })
+            dialogs.show(AppDialog.DeleteAlbums(albums, prefs.useTrash) { toTrash -> confirmDelete(media, prefs.useTrash, toTrash) {} })
         }
     }
 

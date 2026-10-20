@@ -117,6 +117,10 @@
     <string name="move_to_trash_hint">Items stay in the trash for 30 days, you can restore them until then.</string>
     <string name="delete_permanently">Delete permanently</string>
     <string name="delete_permanently_hint">This can\'t be undone.</string>
+    <plurals name="delete_n_permanently_question">
+        <item quantity="one">Delete %d item permanently?</item>
+        <item quantity="other">Delete %d items permanently?</item>
+    </plurals>
     <plurals name="moved_n_to_trash">
         <item quantity="one">Moved %d item to the trash</item>
         <item quantity="other">Moved %d items to the trash</item>

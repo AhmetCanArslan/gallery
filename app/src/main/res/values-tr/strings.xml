@@ -117,6 +117,10 @@
     <string name="move_to_trash_hint">Öğeler 30 gün çöp kutusunda kalır, o zamana kadar geri yükleyebilirsin.</string>
     <string name="delete_permanently">Kalıcı olarak sil</string>
     <string name="delete_permanently_hint">Bu işlem geri alınamaz.</string>
+    <plurals name="delete_n_permanently_question">
+        <item quantity="one">%d öğe kalıcı olarak silinsin mi?</item>
+        <item quantity="other">%d öğe kalıcı olarak silinsin mi?</item>
+    </plurals>
     <plurals name="moved_n_to_trash">
         <item quantity="one">%d öğe çöp kutusuna taşındı</item>
         <item quantity="other">%d öğe çöp kutusuna taşındı</item>
