@@ -34,7 +34,6 @@ import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.RestoreFromTrash
-import androidx.compose.material.icons.rounded.Slideshow
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.ViewModule
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -212,13 +211,6 @@ fun AlbumScreen(
                                     Icon(Icons.Rounded.SelectAll, stringResource(R.string.select_all))
                                 }
                             } else {
-                                if (state.media.isNotEmpty() && !isTrash && activity.pickRequest == null) {
-                                    IconButton(onClick = {
-                                        viewer.open(path, state.media.first().path, slideshow = true)
-                                    }) {
-                                        Icon(Icons.Rounded.Slideshow, stringResource(R.string.slideshow))
-                                    }
-                                }
                                 if (isTrash) {
                                     if (state.media.isNotEmpty()) {
                                         OverflowMenu(
