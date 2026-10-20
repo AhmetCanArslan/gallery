@@ -67,6 +67,22 @@ class Prefs private constructor(context: Context) {
         covers.edit().apply { if (cover == null) remove(path) else putString(path, cover.encode()) }.apply()
     }
 
+    /** Keeps covers across renames: moves the cover of folder [old] to [new]. */
+    fun moveAlbumCover(old: String, new: String) {
+        val value = covers.getString(old, null) ?: return
+        covers.edit().remove(old).putString(new, value).apply()
+    }
+
+    /** Points photo covers at the new paths of renamed or moved files, old path to new. */
+    fun moveCoverPhotos(renamed: Map<String, String>) {
+        val editor = covers.edit()
+        albumCovers().forEach { (album, cover) ->
+            val new = (cover as? AlbumCover.Photo)?.let { renamed[it.path] } ?: return@forEach
+            editor.putString(album, AlbumCover.Photo(new).encode())
+        }
+        editor.apply()
+    }
+
     private fun int(key: String, default: Int) = object : ReadWriteProperty<Any, Int> {
         override fun getValue(thisRef: Any, property: KProperty<*>) = prefs.getInt(key, default)
         override fun setValue(thisRef: Any, property: KProperty<*>, value: Int) = prefs.edit().putInt(key, value).apply()

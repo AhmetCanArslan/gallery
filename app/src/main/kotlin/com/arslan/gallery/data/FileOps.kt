@@ -87,6 +87,7 @@ class FileOps(context: Context) {
         if (move) {
             forgetPaths(renamed.keys, keepFavorites = true)
             moveFavorites(renamed)
+            prefs.moveCoverPhotos(renamed)
         }
         scan(created)
         created
@@ -102,12 +103,15 @@ class FileOps(context: Context) {
             val children = target.listFiles()?.filter { it.name.isMediaFile() }.orEmpty()
             val oldPaths = children.map { "$path/${it.name}" }
             forgetPaths(oldPaths, keepFavorites = true)
-            moveFavorites(oldPaths.zip(children.map { it.absolutePath }).toMap())
+            val renamed = oldPaths.zip(children.map { it.absolutePath }).toMap()
+            moveFavorites(renamed)
+            prefs.moveCoverPhotos(renamed)
             replaceFolderInPrefs(path, target.absolutePath)
             scan(children.map { it.absolutePath })
         } else {
             forgetPaths(listOf(path), keepFavorites = true)
             moveFavorites(mapOf(path to target.absolutePath))
+            prefs.moveCoverPhotos(mapOf(path to target.absolutePath))
             scan(listOf(target.absolutePath))
         }
         target.absolutePath
@@ -213,6 +217,7 @@ class FileOps(context: Context) {
     private fun replaceFolderInPrefs(old: String, new: String) {
         prefs.pinnedFolders.let { if (old in it) prefs.pinnedFolders = it - old + new }
         prefs.excludedFolders.let { if (old in it) prefs.excludedFolders = it - old + new }
+        prefs.moveAlbumCover(old, new)
     }
 
     private suspend fun <T> io(block: suspend () -> T): T = withContext(Dispatchers.IO) { block() }
