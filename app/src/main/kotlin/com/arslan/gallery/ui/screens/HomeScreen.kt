@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material.icons.rounded.PhotoAlbum
@@ -515,6 +516,12 @@ private fun AlbumSelectionToolbar(
         OverflowMenu(
             icon = Icons.Rounded.MoreVert,
             actions = buildList {
+                if (selectedAlbums.size == 1) {
+                    add(MenuAction(stringResource(R.string.change_cover), Icons.Rounded.Image) {
+                        activity.changeAlbumCover(selectedAlbums.first())
+                        onClearSelection()
+                    })
+                }
                 if (selectedAlbums.size == 1 && !selectedAlbums.first().isFavorites) {
                     add(MenuAction(stringResource(R.string.rename), Icons.Rounded.Edit) {
                         activity.renameAlbum(selectedAlbums.first())
