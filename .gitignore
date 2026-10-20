@@ -13,3 +13,5 @@ keystore.properties
 fastlane/fastlane.json
 fastlane/report.xml
 .kotlin/
+app/release/
+gradle/gradle-daemon-jvm.properties
