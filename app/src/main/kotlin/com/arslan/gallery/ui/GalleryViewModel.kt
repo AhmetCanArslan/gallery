@@ -93,6 +93,7 @@ class GalleryViewModel(app: Application) : AndroidViewModel(app) {
                 favoritesName = context.getString(R.string.favorites),
                 storageName = context.getString(R.string.internal_storage),
                 checkHidden = prefs.showHidden,
+                covers = prefs.albumCovers(),
             ),
             isLoading = !lib.isLoaded,
             isRefreshing = isRefreshing,

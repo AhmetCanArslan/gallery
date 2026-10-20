@@ -102,10 +102,11 @@ fun buildAlbums(
     favoritesName: String,
     storageName: String,
     checkHidden: Boolean,
+    covers: Map<String, AlbumCover> = emptyMap(),
 ): List<Album> {
     val folders = media.groupBy { it.parentPath }.map { (folder, items) ->
         val name = if (folder.endsWith("/emulated/0")) storageName else folder.filename
-        albumOf(folder, name, items, checkHidden)
+        albumOf(folder, name, items, checkHidden, covers[folder])
     }
 
     val comparator: Comparator<Album> = when (sorting and SORT_TYPE_MASK) {
@@ -119,11 +120,11 @@ fun buildAlbums(
     val (pinnedAlbums, others) = sorted.partition { it.path in pinned }
 
     val favorites = media.filter { it.isFavorite }
-    val favoritesAlbum = if (favorites.isEmpty()) null else albumOf(FAVORITES, favoritesName, favorites, checkHidden = false)
+    val favoritesAlbum = if (favorites.isEmpty()) null else albumOf(FAVORITES, favoritesName, favorites, checkHidden = false, covers[FAVORITES])
     return listOfNotNull(favoritesAlbum) + pinnedAlbums + others
 }
 
-private fun albumOf(path: String, name: String, items: List<Medium>, checkHidden: Boolean): Album {
+private fun albumOf(path: String, name: String, items: List<Medium>, checkHidden: Boolean, custom: AlbumCover?): Album {
     var cover = items.first()
     var modified = 0L
     var taken = 0L
@@ -134,10 +135,13 @@ private fun albumOf(path: String, name: String, items: List<Medium>, checkHidden
         if (it.taken > taken) taken = it.taken
         size += it.size
     }
+    // A picked photo that's gone, e.g. deleted or moved, falls back to the latest one.
+    if (custom is AlbumCover.Photo) items.firstOrNull { it.path == custom.path }?.let { cover = it }
     return Album(
         path = path,
         name = name,
         cover = cover,
+        icon = (custom as? AlbumCover.Icon)?.key,
         count = items.size,
         modified = modified,
         taken = taken,
