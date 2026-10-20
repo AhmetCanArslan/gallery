@@ -27,6 +27,9 @@ class Prefs private constructor(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
+    /** Custom album covers by album path, see [AlbumCover]. */
+    private val covers: SharedPreferences = context.getSharedPreferences("album_covers", Context.MODE_PRIVATE)
+
     var theme by int("theme", THEME_SYSTEM)
     var dynamicColors by boolean("dynamic_colors", true)
 
@@ -54,6 +57,15 @@ class Prefs private constructor(context: Context) {
     var autoplayVideos by boolean("autoplay_videos", true)
     var loopVideos by boolean("loop_videos", false)
     var muteVideos by boolean("mute_videos", false)
+
+    fun albumCovers(): Map<String, AlbumCover> = covers.all.mapNotNull { (path, value) ->
+        AlbumCover.parse(value as? String ?: return@mapNotNull null)?.let { path to it }
+    }.toMap()
+
+    /** Sets the cover of the album at [path], null goes back to its latest photo. */
+    fun setAlbumCover(path: String, cover: AlbumCover?) {
+        covers.edit().apply { if (cover == null) remove(path) else putString(path, cover.encode()) }.apply()
+    }
 
     private fun int(key: String, default: Int) = object : ReadWriteProperty<Any, Int> {
         override fun getValue(thisRef: Any, property: KProperty<*>) = prefs.getInt(key, default)
