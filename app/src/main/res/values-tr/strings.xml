@@ -184,8 +184,6 @@
     <string name="filter_sepia">Sepya</string>
     <string name="filter_fade">Soluk</string>
     <string name="filter_chrome">Krom</string>
-    <string name="save_changes">Değişiklikleri kaydet</string>
-    <string name="save_changes_message">Orijinali koruyup kopya olarak kaydet ya da orijinalin yerine yaz.</string>
     <string name="save_as_copy">Kopya olarak kaydet</string>
     <string name="overwrite_original">Orijinalin yerine yaz</string>
     <string name="saved">Kaydedildi</string>

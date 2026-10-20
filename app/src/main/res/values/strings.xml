@@ -184,8 +184,6 @@
     <string name="filter_sepia">Sepia</string>
     <string name="filter_fade">Fade</string>
     <string name="filter_chrome">Chrome</string>
-    <string name="save_changes">Save changes</string>
-    <string name="save_changes_message">Keep the original and save a copy, or replace the original.</string>
     <string name="save_as_copy">Save as copy</string>
     <string name="overwrite_original">Replace original</string>
     <string name="saved">Saved</string>
