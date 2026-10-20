@@ -68,6 +68,7 @@ sealed interface AppDialog {
 
     class Rename(val title: String, val initialName: String, val onConfirm: (String) -> Unit) : AppDialog
     class PickFolder(val title: String, val currentFolders: Set<String>, val onPick: (String) -> Unit) : AppDialog
+    class ChooseCover(val album: Album) : AppDialog
     data object AllFilesAccess : AppDialog
 }
 
@@ -127,6 +128,7 @@ fun DialogHost(state: DialogState) {
                     is AppDialog.Confirm -> ConfirmDialog(current, state::dismiss)
                     is AppDialog.Rename -> RenameDialog(current, state::dismiss)
                     is AppDialog.PickFolder -> PickFolderDialog(current, state::dismiss)
+                    is AppDialog.ChooseCover -> ChooseCoverDialog(current, state::dismiss)
                     AppDialog.AllFilesAccess -> AllFilesAccessDialog(state::dismiss)
                     null -> Unit
                 }

@@ -32,6 +32,7 @@ import androidx.core.os.BundleCompat
 import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.lifecycleScope
 import com.arslan.gallery.data.Album
+import com.arslan.gallery.data.AlbumCover
 import com.arslan.gallery.data.FAVORITES
 import com.arslan.gallery.data.MediaLibrary
 import com.arslan.gallery.data.Medium
@@ -524,6 +525,14 @@ open class MainActivity : ComponentActivity() {
                 viewModel.refresh()
             }
         })
+    }
+
+    fun changeAlbumCover(album: Album) = dialogs.show(AppDialog.ChooseCover(album))
+
+    /** Sets the cover of the album at [path], null goes back to its latest photo. */
+    fun setAlbumCover(path: String, cover: AlbumCover?) {
+        prefs.setAlbumCover(path, cover)
+        viewModel.onArrangementChanged()
     }
 
     private fun albumMedia(albums: Collection<String>): List<Medium> {
