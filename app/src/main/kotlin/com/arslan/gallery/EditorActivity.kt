@@ -15,7 +15,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -63,7 +62,8 @@ class EditorActivity : ComponentActivity() {
                         state = state,
                         isSaving = isSaving,
                         onClose = ::close,
-                        onSave = ::askSave,
+                        canOverwrite = path?.extension in overwritableFormats,
+                        onSave = ::requestSave,
                     )
                     DialogHost(dialogs)
                 }
@@ -98,24 +98,12 @@ class EditorActivity : ComponentActivity() {
         )
     }
 
-    private fun askSave() {
+    private fun requestSave(overwrite: Boolean) {
         if (!hasAllFilesAccess()) {
             dialogs.show(AppDialog.AllFilesAccess)
             return
         }
-        val canOverwrite = path != null && path!!.extension in overwritableFormats
-        dialogs.show(
-            AppDialog.Confirm(
-                icon = Icons.Rounded.Save,
-                title = getString(R.string.save_changes),
-                message = getString(R.string.save_changes_message),
-                confirmLabel = getString(R.string.save_as_copy),
-                destructive = false,
-                secondaryLabel = if (canOverwrite) getString(R.string.overwrite_original) else null,
-                onSecondary = { save(overwrite = true) },
-                onConfirm = { save(overwrite = false) },
-            )
-        )
+        save(overwrite)
     }
 
     private fun save(overwrite: Boolean) {

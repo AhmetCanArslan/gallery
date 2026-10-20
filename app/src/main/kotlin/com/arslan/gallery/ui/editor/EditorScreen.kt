@@ -8,6 +8,7 @@ import android.graphics.Path
 import android.graphics.RectF
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,6 +20,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -43,11 +46,15 @@ import androidx.compose.material.icons.rounded.AutoFixHigh
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Crop
 import androidx.compose.material.icons.rounded.Flip
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.RestartAlt
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FilledTonalIconButton
@@ -59,8 +66,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SplitButtonDefaults
+import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,16 +84,23 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.arslan.gallery.R
 import kotlin.math.abs
 import kotlin.math.max
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val BrushColors = listOf(
     Color.White, Color.Black, Color(0xFFFF5252), Color(0xFFFFD740), Color(0xFF69F0AE), Color(0xFF40C4FF), Color(0xFFE040FB),
@@ -95,7 +112,8 @@ fun EditorScreen(
     state: EditState?,
     isSaving: Boolean,
     onClose: () -> Unit,
-    onSave: () -> Unit,
+    canOverwrite: Boolean,
+    onSave: (overwrite: Boolean) -> Unit,
 ) {
     BackHandler(onBack = onClose)
 
@@ -122,11 +140,11 @@ fun EditorScreen(
                     .weight(1f)
                     .padding(start = 8.dp),
             )
-            Button(onClick = onSave, enabled = state?.hasChanges == true && !isSaving) {
-                Icon(Icons.Rounded.Check, null, Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.save))
-            }
+            SaveButton(
+                enabled = state?.hasChanges == true && !isSaving,
+                canOverwrite = canOverwrite,
+                onSave = onSave,
+            )
         }
 
         Box(
@@ -163,6 +181,95 @@ fun EditorScreen(
                     ToolButton(state, EditorTool.Draw, Icons.Rounded.Brush, R.string.draw)
                 }
             }
+        }
+    }
+}
+
+/** Tap saves a copy; the arrow or a long press opens the copy / overwrite choice. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SaveButton(
+    enabled: Boolean,
+    canOverwrite: Boolean,
+    onSave: (overwrite: Boolean) -> Unit,
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    // The leading button has no long-click callback, so a long press is detected from its interactions.
+    val interactions = remember { MutableInteractionSource() }
+    val longPressTimeout = LocalViewConfiguration.current.longPressTimeoutMillis
+    val haptics = LocalHapticFeedback.current
+    var longPressed by remember { mutableStateOf(false) }
+    LaunchedEffect(interactions) {
+        var pending: Job? = null
+        interactions.interactions.collect { interaction ->
+            when (interaction) {
+                is PressInteraction.Press -> {
+                    longPressed = false
+                    pending = launch {
+                        delay(longPressTimeout)
+                        longPressed = true
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        menuOpen = true
+                    }
+                }
+                is PressInteraction.Release, is PressInteraction.Cancel -> pending?.cancel()
+            }
+        }
+    }
+
+    Box {
+        SplitButtonLayout(
+            leadingButton = {
+                SplitButtonDefaults.LeadingButton(
+                    onClick = { if (!longPressed) onSave(false) },
+                    enabled = enabled,
+                    interactionSource = interactions,
+                ) {
+                    Icon(Icons.Rounded.Check, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.save))
+                }
+            },
+            trailingButton = {
+                SplitButtonDefaults.TrailingButton(
+                    checked = menuOpen,
+                    onCheckedChange = { menuOpen = it },
+                    enabled = enabled,
+                ) {
+                    val rotation by animateFloatAsState(if (menuOpen) 180f else 0f, label = "saveMenuArrow")
+                    Icon(
+                        Icons.Rounded.KeyboardArrowDown,
+                        stringResource(R.string.more_options),
+                        Modifier
+                            .size(SplitButtonDefaults.TrailingIconSize)
+                            .graphicsLayer { rotationZ = rotation },
+                    )
+                }
+            },
+        )
+        DropdownMenu(
+            expanded = menuOpen,
+            onDismissRequest = { menuOpen = false },
+            shape = RoundedCornerShape(20.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.save_as_copy)) },
+                leadingIcon = { Icon(Icons.Rounded.ContentCopy, null) },
+                onClick = {
+                    menuOpen = false
+                    onSave(false)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.overwrite_original)) },
+                leadingIcon = { Icon(Icons.Rounded.Save, null) },
+                enabled = canOverwrite,
+                onClick = {
+                    menuOpen = false
+                    onSave(true)
+                },
+            )
         }
     }
 }
