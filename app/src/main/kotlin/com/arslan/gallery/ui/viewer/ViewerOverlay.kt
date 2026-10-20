@@ -43,6 +43,7 @@ import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.DriveFileRenameOutline
 import androidx.compose.material.icons.rounded.Map
+import androidx.compose.material.icons.rounded.PhotoAlbum
 import androidx.compose.material.icons.rounded.PhotoSizeSelectLarge
 import androidx.compose.material.icons.rounded.RestoreFromTrash
 import androidx.compose.material.icons.automirrored.rounded.RotateLeft
@@ -111,6 +112,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import com.arslan.gallery.R
+import com.arslan.gallery.data.AlbumCover
 import com.arslan.gallery.data.Medium
 import com.arslan.gallery.ui.LocalGalleryActivity
 import com.arslan.gallery.ui.GalleryViewModel
@@ -545,6 +547,12 @@ private fun ViewerTopBar(medium: Medium, onBack: () -> Unit) {
                         )
                     }
                     add(MenuAction(stringResource(R.string.show_on_map), Icons.Rounded.Map) { activity.showOnMap(medium.path) })
+                    if (isFile && !activity.isStandaloneViewer) {
+                        add(MenuAction(stringResource(R.string.set_as_album_cover), Icons.Rounded.PhotoAlbum) {
+                            activity.setAlbumCover(medium.parentPath, AlbumCover.Photo(medium.path))
+                            activity.toast(R.string.album_cover_set)
+                        })
+                    }
                 },
             )
         }
