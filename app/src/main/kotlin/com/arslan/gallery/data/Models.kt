@@ -65,11 +65,32 @@ data class Medium(
     fun uri(): Uri = if (isUri) Uri.parse(path) else Uri.fromFile(File(path))
 }
 
+/** Cover the user picked for an album instead of its latest photo. */
+sealed interface AlbumCover {
+    data class Photo(val path: String) : AlbumCover
+    data class Icon(val key: String) : AlbumCover
+
+    fun encode() = when (this) {
+        is Photo -> "photo:$path"
+        is Icon -> "icon:$key"
+    }
+
+    companion object {
+        fun parse(value: String): AlbumCover? = when {
+            value.startsWith("photo:") -> Photo(value.removePrefix("photo:"))
+            value.startsWith("icon:") -> Icon(value.removePrefix("icon:"))
+            else -> null
+        }
+    }
+}
+
 @Immutable
 data class Album(
     val path: String,
     val name: String,
     val cover: Medium?,
+    /** Key of the icon shown instead of [cover], see AlbumIcons. */
+    val icon: String? = null,
     val count: Int,
     val modified: Long,
     val taken: Long,
