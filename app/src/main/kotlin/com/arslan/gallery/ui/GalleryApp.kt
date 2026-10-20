@@ -141,10 +141,6 @@ class ViewerController {
         private set
     var currentPath by mutableStateOf("")
 
-    /** Whether the viewer was opened as a slideshow. */
-    var startSlideshow by mutableStateOf(false)
-        private set
-
     /** Bumped on every opening, each one gets a fresh viewer. */
     var session by mutableIntStateOf(0)
         private set
@@ -168,7 +164,7 @@ class ViewerController {
 
     val corners = FlightCorners()
 
-    fun open(source: String, path: String, slideshow: Boolean = false) {
+    fun open(source: String, path: String) {
         // Still flying back: catch it mid-air instead of starting over from the grid.
         val flight = flights.firstOrNull { it.source == source && it.medium.path == path }
         if (flight != null) flights.remove(flight)
@@ -176,7 +172,6 @@ class ViewerController {
         openScrim = flight?.scrim() ?: 0f
         sourcePath = source
         currentPath = path
-        startSlideshow = slideshow
         session++
         isOpen = true
     }

@@ -34,7 +34,6 @@ import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import kotlinx.coroutines.delay
-import com.arslan.gallery.ui.theme.EmphasizedEasing
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -49,7 +48,6 @@ import androidx.compose.material.icons.rounded.RestoreFromTrash
 import androidx.compose.material.icons.automirrored.rounded.RotateLeft
 import androidx.compose.material.icons.automirrored.rounded.RotateRight
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material.icons.rounded.Slideshow
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.Wallpaper
@@ -114,7 +112,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import com.arslan.gallery.R
 import com.arslan.gallery.data.Medium
-import com.arslan.gallery.data.prefs
 import com.arslan.gallery.ui.LocalGalleryActivity
 import com.arslan.gallery.ui.GalleryViewModel
 import com.arslan.gallery.ui.LocalViewer
@@ -223,8 +220,7 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
         isOpening = false
     }
 
-    var slideshow by remember { mutableStateOf(viewer.startSlideshow) }
-    var chromeVisible by remember { mutableStateOf(!viewer.startSlideshow) }
+    var chromeVisible by remember { mutableStateOf(true) }
     var showInfo by remember { mutableStateOf(false) }
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
     var isDragging by remember { mutableStateOf(false) }
@@ -244,26 +240,7 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
 
     val currentMedium = media.getOrNull(pagerState.currentPage)
 
-    // Slideshow: advance through the photos until the end, any tap stops it.
-    val view = LocalView.current
-    LaunchedEffect(slideshow, pagerState.settledPage, isOpening) {
-        if (!slideshow || isOpening) return@LaunchedEffect
-        view.keepScreenOn = true
-        try {
-            delay(activity.prefs.slideshowInterval * 1000L)
-            val next = (pagerState.settledPage + 1 until media.size).firstOrNull { !media[it].isVideo }
-            if (next == null) {
-                slideshow = false
-                chromeVisible = true
-            } else {
-                pagerState.animateScrollToPage(next, animationSpec = tween(SLIDESHOW_PAGE_MS, easing = EmphasizedEasing))
-            }
-        } finally {
-            view.keepScreenOn = false
-        }
-    }
     val toggleChrome = {
-        if (slideshow) slideshow = false
         chromeVisible = !chromeVisible
     }
 
@@ -453,10 +430,6 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
                 ViewerTopBar(
                     medium = medium,
                     onBack = { close(Offset.Zero) },
-                    onSlideshow = {
-                        chromeVisible = false
-                        slideshow = true
-                    },
                 )
             }
         }
@@ -511,7 +484,7 @@ private fun Modifier.photoFrame(corners: FlightCorners, natural: () -> PhotoFram
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ViewerTopBar(medium: Medium, onBack: () -> Unit, onSlideshow: () -> Unit) {
+private fun ViewerTopBar(medium: Medium, onBack: () -> Unit) {
     val activity = LocalGalleryActivity.current
     val timestamp = if (medium.taken > 0) medium.taken else medium.modified
     val date = remember(timestamp) { if (timestamp > 0) DateFormat.getDateInstance(DateFormat.LONG).format(Date(timestamp)) else null }
@@ -572,9 +545,6 @@ private fun ViewerTopBar(medium: Medium, onBack: () -> Unit, onSlideshow: () -> 
                         )
                     }
                     add(MenuAction(stringResource(R.string.show_on_map), Icons.Rounded.Map) { activity.showOnMap(medium.path) })
-                    if (!medium.isInTrash && !activity.isStandaloneViewer) {
-                        add(MenuAction(stringResource(R.string.slideshow), Icons.Rounded.Slideshow, onSlideshow))
-                    }
                 },
             )
         }
@@ -629,8 +599,6 @@ private fun ViewerBottomToolbar(medium: Medium) {
         }
     }
 }
-
-private const val SLIDESHOW_PAGE_MS = 600
 
 /** Long enough for the full image to fade in first. */
 private const val NEIGHBOURS_DELAY_MS = 300L
