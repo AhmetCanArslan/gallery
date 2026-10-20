@@ -50,7 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
@@ -60,11 +59,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.net.Uri
-import coil3.compose.AsyncImage
 import com.arslan.gallery.R
 import com.arslan.gallery.ui.LocalGalleryActivity
+import com.arslan.gallery.ui.components.AlbumCoverImage
 import com.arslan.gallery.ui.components.rememberHaptics
-import com.arslan.gallery.ui.components.thumbnailRequest
 import java.io.File
 
 @Composable
@@ -153,7 +151,6 @@ fun RenameDialog(dialog: AppDialog.Rename, onDismiss: () -> Unit) {
 @Composable
 fun PickFolderDialog(dialog: AppDialog.PickFolder, onDismiss: () -> Unit) {
     val activity = LocalGalleryActivity.current
-    val context = LocalContext.current
     val haptics = rememberHaptics()
     val albumsState by activity.viewModel.albums.collectAsStateWithLifecycle()
     val albums = remember(albumsState) {
@@ -223,18 +220,7 @@ fun PickFolderDialog(dialog: AppDialog.PickFolder, onDismiss: () -> Unit) {
                             FolderRow(
                                 name = album.name,
                                 path = album.path,
-                                cover = {
-                                    val cover = album.cover
-                                    if (cover == null) {
-                                        Icon(Icons.Rounded.Folder, null)
-                                    } else {
-                                        AsyncImage(
-                                            model = remember(cover.signature) { thumbnailRequest(context, cover) },
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Crop,
-                                        )
-                                    }
-                                },
+                                cover = { AlbumCoverImage(album, iconSize = 24.dp) },
                                 onClick = { pick(album.path) },
                             )
                         }
