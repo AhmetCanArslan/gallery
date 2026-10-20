@@ -46,6 +46,12 @@
     <string name="pin_album">Pin</string>
     <string name="unpin_album">Unpin</string>
     <string name="rename_album">Rename album</string>
+    <string name="change_cover">Change cover</string>
+    <string name="set_as_album_cover">Set as album cover</string>
+    <string name="album_cover_set">Album cover updated</string>
+    <string name="cover_photo">Photo</string>
+    <string name="cover_icon">Icon</string>
+    <string name="use_latest_photo">Use latest photo</string>
     <string name="open_settings">Open settings</string>
     <string name="grant_access">Grant access</string>
 

@@ -46,6 +46,12 @@
     <string name="pin_album">Sabitle</string>
     <string name="unpin_album">Sabitlemeyi kaldır</string>
     <string name="rename_album">Albümü yeniden adlandır</string>
+    <string name="change_cover">Kapağı değiştir</string>
+    <string name="set_as_album_cover">Albüm kapağı yap</string>
+    <string name="album_cover_set">Albüm kapağı güncellendi</string>
+    <string name="cover_photo">Fotoğraf</string>
+    <string name="cover_icon">Simge</string>
+    <string name="use_latest_photo">Son fotoğrafı kullan</string>
     <string name="open_settings">Ayarları aç</string>
     <string name="grant_access">Erişim izni ver</string>
 
