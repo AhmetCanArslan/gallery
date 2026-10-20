@@ -31,7 +31,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Icon
@@ -47,23 +46,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.arslan.gallery.data.Album
 import com.arslan.gallery.data.prefs
 import com.arslan.gallery.ui.LocalNavAnimatedVisibilityScope
 import com.arslan.gallery.ui.LocalSharedTransitionScope
 import com.arslan.gallery.ui.theme.AlbumCardEnter
 import com.arslan.gallery.ui.theme.ContainerTransformBounds
+import com.arslan.gallery.ui.components.AlbumCoverImage
 import com.arslan.gallery.ui.components.SelectionIndicator
 import com.arslan.gallery.ui.components.pinchToChangeColumns
 import com.arslan.gallery.ui.components.pressScale
 import com.arslan.gallery.ui.components.rememberHaptics
 import com.arslan.gallery.ui.components.staggeredEntrance
-import com.arslan.gallery.ui.components.thumbnailRequest
 
 fun albumSharedKey(path: String) = "album:$path"
 
@@ -185,7 +182,7 @@ private fun AlbumCard(
                     onLongClick = onLongClick,
                 ),
         ) {
-            AlbumCover(album)
+            AlbumCoverImage(album, iconSize = if (columns <= 2) 56.dp else 40.dp)
 
             Row(
                 modifier = Modifier
@@ -231,24 +228,6 @@ private fun AlbumCard(
                 modifier = Modifier.padding(horizontal = 4.dp),
             )
         }
-    }
-}
-
-@Composable
-private fun AlbumCover(album: Album) {
-    val context = LocalContext.current
-    val cover = album.cover
-    if (cover == null) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Icon(Icons.Rounded.Folder, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(36.dp))
-        }
-    } else {
-        AsyncImage(
-            model = remember(cover.signature) { thumbnailRequest(context, cover) },
-            contentDescription = album.name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-        )
     }
 }
 
