@@ -32,8 +32,6 @@ import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.QuestionMark
-import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.Slideshow
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Visibility
@@ -48,7 +46,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -57,7 +54,6 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -79,7 +75,6 @@ import com.arslan.gallery.ui.LocalGalleryActivity
 import com.arslan.gallery.ui.LocalNavigator
 import com.arslan.gallery.ui.components.rememberHaptics
 import com.arslan.gallery.ui.theme.Appearance
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -143,7 +138,6 @@ fun SettingsScreen(viewModel: GalleryViewModel) {
                     PrefSwitch(Icons.Rounded.PlayCircle, stringResource(R.string.autoplay_videos), null, prefs.autoplayVideos) { prefs.autoplayVideos = it }
                     PrefSwitch(Icons.Rounded.Loop, stringResource(R.string.loop_videos), null, prefs.loopVideos) { prefs.loopVideos = it }
                     PrefSwitch(Icons.AutoMirrored.Rounded.VolumeOff, stringResource(R.string.mute_videos), null, prefs.muteVideos) { prefs.muteVideos = it }
-                    SlideshowInterval()
                 }
             }
 
@@ -320,47 +314,5 @@ private fun ThemeChooser() {
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun SlideshowInterval() {
-    val prefs = LocalGalleryActivity.current.prefs
-    val haptics = rememberHaptics()
-    var seconds by remember { mutableFloatStateOf(prefs.slideshowInterval.toFloat()) }
-
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(6.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .padding(16.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Rounded.Slideshow, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(22.dp))
-            }
-            Spacer(Modifier.width(16.dp))
-            Text(stringResource(R.string.slideshow_interval), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            Icon(Icons.Rounded.Schedule, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text(stringResource(R.string.n_seconds, seconds.roundToInt()), style = MaterialTheme.typography.labelLarge)
-        }
-        Slider(
-            value = seconds,
-            onValueChange = {
-                if (it.roundToInt() != seconds.roundToInt()) haptics.tick()
-                seconds = it
-            },
-            onValueChangeFinished = { prefs.slideshowInterval = seconds.roundToInt() },
-            valueRange = 2f..10f,
-            steps = 7,
-        )
     }
 }

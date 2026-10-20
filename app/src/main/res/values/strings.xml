@@ -203,8 +203,6 @@
     <string name="autoplay_videos">Play videos automatically</string>
     <string name="loop_videos">Loop videos</string>
     <string name="mute_videos">Start videos muted</string>
-    <string name="slideshow_interval">Slideshow interval</string>
-    <string name="n_seconds">%d s</string>
     <string name="deleting">Deleting</string>
     <string name="use_trash">Use trash</string>
     <string name="use_trash_summary">Deleted items can be restored for 30 days</string>

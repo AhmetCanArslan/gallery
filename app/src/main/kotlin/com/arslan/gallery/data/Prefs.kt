@@ -54,7 +54,6 @@ class Prefs private constructor(context: Context) {
     var autoplayVideos by boolean("autoplay_videos", true)
     var loopVideos by boolean("loop_videos", false)
     var muteVideos by boolean("mute_videos", false)
-    var slideshowInterval by int("slideshow_interval", 4)
 
     private fun int(key: String, default: Int) = object : ReadWriteProperty<Any, Int> {
         override fun getValue(thisRef: Any, property: KProperty<*>) = prefs.getInt(key, default)

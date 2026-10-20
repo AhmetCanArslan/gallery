@@ -203,8 +203,6 @@
     <string name="autoplay_videos">Videoları otomatik oynat</string>
     <string name="loop_videos">Videoları döngüye al</string>
     <string name="mute_videos">Videoları sessiz başlat</string>
-    <string name="slideshow_interval">Slayt aralığı</string>
-    <string name="n_seconds">%d sn</string>
     <string name="deleting">Silme</string>
     <string name="use_trash">Çöp kutusunu kullan</string>
     <string name="use_trash_summary">Silinen öğeler 30 gün boyunca geri yüklenebilir</string>
