@@ -59,6 +59,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -393,7 +394,8 @@ private fun VideoControls(player: ExoPlayer) {
         while (true) {
             if (!seeking) position = player.currentPosition
             duration = player.duration.coerceAtLeast(0L)
-            delay(100)
+            // Follow every frame while playing so the thumb glides, idle slowly otherwise.
+            if (player.isPlaying) withFrameMillis {} else delay(250)
         }
     }
 
