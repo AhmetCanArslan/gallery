@@ -407,11 +407,8 @@ private fun VideoControls(player: ExoPlayer) {
             .padding(horizontal = 16.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = (shown / 1000).toInt().formatDuration(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
+        val durationText = remember(duration) { (duration / 1000).toInt().formatDuration() }
+        TimeLabel(text = (shown / 1000).toInt().formatDuration(), widest = durationText)
         Slider(
             value = if (seeking) seekValue else if (duration > 0) position.toFloat() / duration else 0f,
             // Seeks along while dragging, so the frame follows the thumb.
@@ -432,11 +429,7 @@ private fun VideoControls(player: ExoPlayer) {
                 .weight(1f)
                 .padding(horizontal = 12.dp),
         )
-        Text(
-            text = (duration / 1000).toInt().formatDuration(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
+        TimeLabel(text = durationText, widest = durationText)
         IconButton(onClick = {
             muted = !muted
             player.volume = if (muted) 0f else 1f
@@ -449,6 +442,21 @@ private fun VideoControls(player: ExoPlayer) {
         }
     }
 }
+
+/**
+ * Time text that keeps the width of [widest] with tabular digits, so the slider beside it doesn't
+ * resize as the time ticks.
+ */
+@Composable
+private fun TimeLabel(text: String, widest: String) {
+    val style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum")
+    Box(contentAlignment = Alignment.CenterEnd) {
+        Text(text = remember(widest) { widest.replace(DIGIT, "0") }, style = style, modifier = Modifier.alpha(0f))
+        Text(text = text, style = style, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+private val DIGIT = Regex("\\d")
 
 private val Player.isMeantToPlay: Boolean
     get() = playWhenReady && playbackState != Player.STATE_ENDED && playbackState != Player.STATE_IDLE
