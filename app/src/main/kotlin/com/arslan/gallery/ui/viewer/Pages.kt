@@ -413,10 +413,9 @@ private fun VideoControls(player: ExoPlayer) {
             value = if (seeking) seekValue else if (duration > 0) position.toFloat() / duration else 0f,
             // Seeks along while dragging, so the frame follows the thumb.
             onValueChange = {
-                if (!seeking) player.isScrubbingModeEnabled = true
-                seeking = true
                 seekValue = it
-                player.seekTo((it * duration).toLong())
+                player.scrubTo(it, duration, starting = !seeking)
+                seeking = true
             },
             onValueChangeFinished = {
                 player.isScrubbingModeEnabled = false
@@ -442,6 +441,25 @@ private fun VideoControls(player: ExoPlayer) {
         }
     }
 }
+
+/**
+ * Scrubbing seek to [fraction] of [duration]. A scrubbing seek only completes once a frame is
+ * drawn, and past the last frame none is, so every later seek would queue behind it and the
+ * preview freezes. Targets stop short of the end, and an ended player is reset out of scrubbing.
+ */
+@AndroidxOptIn(UnstableApi::class)
+private fun ExoPlayer.scrubTo(fraction: Float, duration: Long, starting: Boolean) {
+    val target = (fraction * duration).toLong().coerceAtMost((duration - SCRUB_END_MARGIN_MS).coerceAtLeast(0L))
+    if (starting || playbackState == Player.STATE_ENDED) {
+        isScrubbingModeEnabled = false
+        seekTo(target)
+        isScrubbingModeEnabled = true
+    } else {
+        seekTo(target)
+    }
+}
+
+private const val SCRUB_END_MARGIN_MS = 300L
 
 /**
  * Time text that keeps the width of [widest] with tabular digits, so the slider beside it doesn't
