@@ -297,11 +297,6 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean, isDragging: Bool
     }
 
     var isPlaying by remember { mutableStateOf(true) }
-    var position by remember { mutableLongStateOf(0L) }
-    var duration by remember { mutableLongStateOf(0L) }
-    var muted by remember { mutableStateOf(prefs.muteVideos) }
-    var seeking by remember { mutableStateOf(false) }
-    var seekValue by remember { mutableFloatStateOf(0f) }
 
     DisposableEffect(player) {
         val listener = object : Player.Listener {
@@ -316,14 +311,6 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean, isDragging: Bool
             view.keepScreenOn = false
             player.removeListener(listener)
             player.release()
-        }
-    }
-
-    LaunchedEffect(player) {
-        while (true) {
-            if (!seeking) position = player.currentPosition
-            duration = player.duration.coerceAtLeast(0L)
-            delay(100)
         }
     }
 
@@ -384,56 +371,81 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean, isDragging: Bool
                 .navigationBarsPadding()
                 .padding(bottom = 96.dp),
         ) {
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f))
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = ((if (seeking) (seekValue * duration).toLong() else position) / 1000).toInt().formatDuration(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Slider(
-                    value = if (seeking) seekValue else if (duration > 0) position.toFloat() / duration else 0f,
-                    // Seeks along while dragging, so the frame follows the thumb.
-                    onValueChange = {
-                        if (!seeking) player.isScrubbingModeEnabled = true
-                        seeking = true
-                        seekValue = it
-                        player.seekTo((it * duration).toLong())
-                    },
-                    onValueChangeFinished = {
-                        player.isScrubbingModeEnabled = false
-                        player.seekTo((seekValue * duration).toLong())
-                        position = (seekValue * duration).toLong()
-                        seeking = false
-                    },
-                    colors = SliderDefaults.colors(),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 12.dp),
-                )
-                Text(
-                    text = (duration / 1000).toInt().formatDuration(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                IconButton(onClick = {
-                    muted = !muted
-                    player.volume = if (muted) 0f else 1f
-                }) {
-                    Icon(
-                        if (muted) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp,
-                        contentDescription = stringResource(R.string.mute_video),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-            }
+            VideoControls(player)
+        }
+    }
+}
+
+/**
+ * Seek bar and mute toggle. Owns the position ticking, so it only runs while the bar is shown and
+ * doesn't recompose the video surface.
+ */
+@AndroidxOptIn(UnstableApi::class)
+@Composable
+private fun VideoControls(player: ExoPlayer) {
+    var position by remember { mutableLongStateOf(player.currentPosition) }
+    var duration by remember { mutableLongStateOf(player.duration.coerceAtLeast(0L)) }
+    var muted by remember { mutableStateOf(player.volume == 0f) }
+    var seeking by remember { mutableStateOf(false) }
+    var seekValue by remember { mutableFloatStateOf(0f) }
+
+    LaunchedEffect(player) {
+        while (true) {
+            if (!seeking) position = player.currentPosition
+            duration = player.duration.coerceAtLeast(0L)
+            delay(100)
+        }
+    }
+
+    val shown = if (seeking) (seekValue * duration).toLong() else position
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f))
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = (shown / 1000).toInt().formatDuration(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Slider(
+            value = if (seeking) seekValue else if (duration > 0) position.toFloat() / duration else 0f,
+            // Seeks along while dragging, so the frame follows the thumb.
+            onValueChange = {
+                if (!seeking) player.isScrubbingModeEnabled = true
+                seeking = true
+                seekValue = it
+                player.seekTo((it * duration).toLong())
+            },
+            onValueChangeFinished = {
+                player.isScrubbingModeEnabled = false
+                player.seekTo((seekValue * duration).toLong())
+                position = (seekValue * duration).toLong()
+                seeking = false
+            },
+            colors = SliderDefaults.colors(),
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+        )
+        Text(
+            text = (duration / 1000).toInt().formatDuration(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        IconButton(onClick = {
+            muted = !muted
+            player.volume = if (muted) 0f else 1f
+        }) {
+            Icon(
+                if (muted) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp,
+                contentDescription = stringResource(R.string.mute_video),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
 }
