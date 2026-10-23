@@ -1,0 +1,4 @@
+# Compiles the whole app ahead of time on install, so opening it and the first scroll don't run through
+# the interpreter and JIT. The libraries ship their own profiles.
+HSPLcom/arslan/gallery/**->**(**)**
+Lcom/arslan/gallery/**;

@@ -2,6 +2,7 @@ package com.arslan.gallery.ui.dialogs
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -35,6 +36,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,12 +79,31 @@ class DialogState {
     var current by mutableStateOf<AppDialog?>(null)
         private set
 
+    /** Dialogs waiting for the one on screen to animate out, e.g. a confirmation asked from a dialog. */
+    private val queue = ArrayDeque<AppDialog>()
+
+    /** Whether a dialog is shown or still animating out. */
+    private var isOnScreen = false
+
     fun show(dialog: AppDialog) {
-        current = dialog
+        if (!isOnScreen) {
+            isOnScreen = true
+            current = dialog
+        } else {
+            queue.addLast(dialog)
+            current = null
+        }
     }
 
     fun dismiss() {
         current = null
+    }
+
+    /** Called by [DialogHost] once the last dialog finished animating out. */
+    internal fun onHidden() {
+        val next = queue.removeFirstOrNull()
+        isOnScreen = next != null
+        current = next
     }
 }
 
@@ -101,8 +122,14 @@ fun DialogHost(state: DialogState) {
 
     BackHandler(enabled = dialog != null) { state.dismiss() }
 
+    val visibility = remember { MutableTransitionState(false) }
+    visibility.targetState = dialog != null
+    if (visibility.isIdle && !visibility.currentState) {
+        LaunchedEffect(Unit) { state.onHidden() }
+    }
+
     AnimatedVisibility(
-        visible = dialog != null,
+        visibleState = visibility,
         enter = fadeIn(tween(180)),
         exit = fadeOut(tween(160)),
     ) {

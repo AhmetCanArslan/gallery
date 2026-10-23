@@ -206,7 +206,9 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
 
     val sourcePath = remember { viewer.sourcePath }
     val state by remember(sourcePath) { viewModel.media(sourcePath) }.collectAsStateWithLifecycle()
-    val media = state.media
+    // While sliding away from a deleted photo the old list stays, so the pager doesn't jump under it.
+    var frozenMedia by remember { mutableStateOf<List<Medium>?>(null) }
+    val media = frozenMedia ?: state.media
     val initialPage = remember { media.indexOfFirst { it.path == viewer.currentPath }.coerceAtLeast(0) }
     val pagerState = rememberPagerState(initialPage = initialPage) { media.size }
     val currentMedia by rememberUpdatedState(media)
@@ -230,8 +232,14 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
     val zoomFractions = remember { mutableStateMapOf<String, Float>() }
     val zoomedBounds = remember { HashMap<String, Rect>() }
 
+    // Which way the user last swiped, +1 towards the next photo, -1 towards the previous one.
+    var lastDirection by remember { mutableIntStateOf(1) }
     LaunchedEffect(pagerState) {
+        var previousPage = pagerState.currentPage
         snapshotFlow { pagerState.currentPage }.collect { page ->
+            // Only swipes count, not the index shifting when a photo before this one goes away.
+            if (page != previousPage && pagerState.isScrollInProgress) lastDirection = if (page > previousPage) 1 else -1
+            previousPage = page
             currentMedia.getOrNull(page)?.let { viewer.currentPath = it.path }
         }
     }
@@ -241,6 +249,23 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
     }
 
     val currentMedium = media.getOrNull(pagerState.currentPage)
+
+    /** Slides on to the neighbour in the direction of the last swipe, the other one at either end. */
+    val slideAwayFrom: (Medium) -> Unit = { deleted ->
+        val list = currentMedia
+        val index = list.indexOfFirst { it.path == deleted.path }
+        if (index >= 0 && list.size > 1) {
+            val target = (index + lastDirection).takeIf { it in list.indices } ?: (index - lastDirection)
+            frozenMedia = list
+            scope.launch {
+                try {
+                    pagerState.animateScrollToPage(target)
+                } finally {
+                    frozenMedia = null
+                }
+            }
+        }
+    }
 
     val toggleChrome = {
         chromeVisible = !chromeVisible
@@ -447,7 +472,7 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
                 .padding(bottom = 16.dp),
         ) {
             currentMedium?.let { medium ->
-                ViewerBottomToolbar(medium = medium)
+                ViewerBottomToolbar(medium = medium, onDeleted = slideAwayFrom)
             }
         }
     }
@@ -561,7 +586,7 @@ private fun ViewerTopBar(medium: Medium, onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ViewerBottomToolbar(medium: Medium) {
+private fun ViewerBottomToolbar(medium: Medium, onDeleted: (Medium) -> Unit) {
     val activity = LocalGalleryActivity.current
 
     HorizontalFloatingToolbar(
@@ -602,7 +627,7 @@ private fun ViewerBottomToolbar(medium: Medium) {
                 if (medium.isInTrash) Icons.Rounded.DeleteForever else Icons.Rounded.DeleteOutline,
                 stringResource(if (medium.isInTrash) R.string.delete_permanently else R.string.delete),
             ) {
-                activity.deleteMedia(listOf(medium))
+                activity.deleteMedia(listOf(medium)) { onDeleted(medium) }
             }
         }
     }

@@ -38,9 +38,10 @@ object NaturalOrder : Comparator<String> {
 fun sortMedia(media: List<Medium>, sorting: Int): List<Medium> {
     val comparator: Comparator<Medium> = when (sorting and SORT_TYPE_MASK) {
         SORT_NAME -> Comparator { a, b -> NaturalOrder.compare(a.name, b.name) }
-        SORT_SIZE -> compareBy { it.size }
-        SORT_MODIFIED -> compareBy { it.modified }
-        else -> compareBy { it.taken }
+        // Plain comparisons, compareBy would box two Longs per comparison.
+        SORT_SIZE -> Comparator { a, b -> a.size.compareTo(b.size) }
+        SORT_MODIFIED -> Comparator { a, b -> a.modified.compareTo(b.modified) }
+        else -> Comparator { a, b -> a.taken.compareTo(b.taken) }
     }
     return media.sortedWith(if (sorting and SORT_DESCENDING != 0) comparator.reversed() else comparator)
 }
@@ -60,11 +61,12 @@ fun groupMedia(media: List<Medium>, grouping: Int, sorting: Int, typeLabel: (Int
     }
     val useModified = sorting and SORT_TYPE_MASK == SORT_MODIFIED
 
+    val calendar = Calendar.getInstance()
     val groups = LinkedHashMap<Any, MutableList<Medium>>()
     sorted.forEach { medium ->
         val key: Any = when (grouping) {
-            GROUP_DAY -> dayStart(if (useModified) medium.modified else medium.taken, month = false)
-            GROUP_MONTH -> dayStart(if (useModified) medium.modified else medium.taken, month = true)
+            GROUP_DAY -> calendar.dayStart(if (useModified) medium.modified else medium.taken, month = false)
+            GROUP_MONTH -> calendar.dayStart(if (useModified) medium.modified else medium.taken, month = true)
             GROUP_TYPE -> medium.type
             else -> medium.parentPath
         }
@@ -72,19 +74,22 @@ fun groupMedia(media: List<Medium>, grouping: Int, sorting: Int, typeLabel: (Int
     }
 
     val locale = Locale.getDefault()
-    val today = dayStart(System.currentTimeMillis(), month = false)
+    val today = calendar.dayStart(System.currentTimeMillis(), month = false)
     val yesterday = today - 24 * 60 * 60 * 1000
-    val thisYear = Calendar.getInstance().get(Calendar.YEAR)
+    val thisYear = calendar.get(Calendar.YEAR)
+    val formats = HashMap<String, java.text.SimpleDateFormat>()
+    fun format(ts: Long, skeleton: String) = formats.getOrPut(skeleton) { dateFormat(skeleton, locale) }
+        .format(Date(ts)).replaceFirstChar { it.titlecase(locale) }
     val result = ArrayList<GridItem>(sorted.size + groups.size)
     groups.forEach { (key, items) ->
         val title = when (grouping) {
             GROUP_DAY -> when (key as Long) {
                 today -> todayLabel
                 yesterday -> yesterdayLabel
-                else -> formatDate(key, if (yearOf(key) == thisYear) "EEEdMMMM" else "EEEdMMMMyyyy", locale)
+                else -> format(key, if (calendar.yearOf(key) == thisYear) "EEEdMMMM" else "EEEdMMMMyyyy")
             }
 
-            GROUP_MONTH -> formatDate(key as Long, if (yearOf(key) == thisYear) "MMMM" else "MMMMyyyy", locale)
+            GROUP_MONTH -> format(key as Long, if (calendar.yearOf(key) == thisYear) "MMMM" else "MMMMyyyy")
             GROUP_TYPE -> typeLabel(key as Int)
             else -> (key as String).filename
         }
@@ -111,10 +116,10 @@ fun buildAlbums(
 
     val comparator: Comparator<Album> = when (sorting and SORT_TYPE_MASK) {
         SORT_NAME -> Comparator { a, b -> NaturalOrder.compare(a.name, b.name) }
-        SORT_SIZE -> compareBy { it.size }
-        SORT_COUNT -> compareBy { it.count }
-        SORT_MODIFIED -> compareBy { it.modified }
-        else -> compareBy { it.taken }
+        SORT_SIZE -> Comparator { a, b -> a.size.compareTo(b.size) }
+        SORT_COUNT -> Comparator { a, b -> a.count.compareTo(b.count) }
+        SORT_MODIFIED -> Comparator { a, b -> a.modified.compareTo(b.modified) }
+        else -> Comparator { a, b -> a.taken.compareTo(b.taken) }
     }
     val sorted = folders.sortedWith(if (sorting and SORT_DESCENDING != 0) comparator.reversed() else comparator)
     val (pinnedAlbums, others) = sorted.partition { it.path in pinned }
@@ -150,7 +155,7 @@ private fun albumOf(path: String, name: String, items: List<Medium>, checkHidden
     )
 }
 
-private fun dayStart(ts: Long, month: Boolean): Long = Calendar.getInstance().run {
+private fun Calendar.dayStart(ts: Long, month: Boolean): Long = run {
     timeInMillis = ts
     set(Calendar.HOUR_OF_DAY, 0)
     set(Calendar.MINUTE, 0)
@@ -160,9 +165,10 @@ private fun dayStart(ts: Long, month: Boolean): Long = Calendar.getInstance().ru
     timeInMillis
 }
 
-private fun yearOf(ts: Long) = Calendar.getInstance().apply { timeInMillis = ts }.get(Calendar.YEAR)
-
-private fun formatDate(ts: Long, skeleton: String, locale: Locale): String {
-    val pattern = DateFormat.getBestDateTimePattern(locale, skeleton)
-    return java.text.SimpleDateFormat(pattern, locale).format(Date(ts)).replaceFirstChar { it.titlecase(locale) }
+private fun Calendar.yearOf(ts: Long): Int {
+    timeInMillis = ts
+    return get(Calendar.YEAR)
 }
+
+private fun dateFormat(skeleton: String, locale: Locale) =
+    java.text.SimpleDateFormat(DateFormat.getBestDateTimePattern(locale, skeleton), locale)

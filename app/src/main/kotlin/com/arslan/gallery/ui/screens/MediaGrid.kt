@@ -132,10 +132,15 @@ fun MediaGrid(
                     contentPadding = contentPadding,
                 ),
         ) {
-            items.forEachIndexed { index, item ->
-                when (item) {
-                    is Section -> stickyHeader(key = item.gridKey(index), contentType = "section") {
-                        val paths = sectionPaths[index].orEmpty()
+            // One interval per run of media instead of one per photo: huge libraries otherwise rebuild
+            // tens of thousands of intervals every time the grid's content changes.
+            var index = 0
+            while (index < items.size) {
+                val item = items[index]
+                if (item is Section) {
+                    val sectionIndex = index
+                    stickyHeader(key = item.gridKey(sectionIndex), contentType = "section") {
+                        val paths = sectionPaths[sectionIndex].orEmpty()
                         val allSelected by remember(paths) { derivedStateOf { paths.isNotEmpty() && paths.all { it in currentSelection } } }
                         SectionHeader(
                             title = item.title,
@@ -149,33 +154,42 @@ fun MediaGrid(
                             modifier = Modifier.animateItem(),
                         )
                     }
+                    index++
+                    continue
+                }
 
-                    is Medium -> item(key = item.path, contentType = "medium") {
-                        val selected by remember(item.path) { derivedStateOf { item.path in currentSelection } }
-                        MediaThumbnail(
-                            sourcePath = sourcePath,
-                            medium = item,
-                            selected = selected,
-                            selectionMode = { selectionMode },
-                            corner = corner,
-                            showDuration = showDuration,
-                            showType = showTypes,
-                            markFavorite = markFavorites,
-                            animateGif = animateGifs,
-                            onClick = {
-                                if (selectionMode) {
-                                    val selected = item.path in currentSelection
-                                    haptics.toggle(!selected)
-                                    onSelectionChange(if (selected) currentSelection - item.path else currentSelection + item.path)
-                                } else {
-                                    onOpen(item)
-                                }
-                            },
-                            modifier = Modifier.animateItem(
-                                placementSpec = spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow),
-                            ),
-                        )
-                    }
+                val start = index
+                while (index < items.size && items[index] is Medium) index++
+                items(
+                    count = index - start,
+                    key = { (items[start + it] as Medium).path },
+                    contentType = { "medium" },
+                ) { offset ->
+                    val item = items[start + offset] as Medium
+                    val selected by remember(item.path) { derivedStateOf { item.path in currentSelection } }
+                    MediaThumbnail(
+                        sourcePath = sourcePath,
+                        medium = item,
+                        selected = selected,
+                        selectionMode = { selectionMode },
+                        corner = corner,
+                        showDuration = showDuration,
+                        showType = showTypes,
+                        markFavorite = markFavorites,
+                        animateGif = animateGifs,
+                        onClick = {
+                            if (selectionMode) {
+                                val selected = item.path in currentSelection
+                                haptics.toggle(!selected)
+                                onSelectionChange(if (selected) currentSelection - item.path else currentSelection + item.path)
+                            } else {
+                                onOpen(item)
+                            }
+                        },
+                        modifier = Modifier.animateItem(
+                            placementSpec = spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow),
+                        ),
+                    )
                 }
             }
         }
