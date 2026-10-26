@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.snap
@@ -16,12 +17,10 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -73,14 +72,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arslan.gallery.MainActivity
@@ -101,6 +99,7 @@ import com.arslan.gallery.ui.Navigator
 import com.arslan.gallery.ui.ViewerController
 import com.arslan.gallery.ui.components.CenteredLoadingIndicator
 import com.arslan.gallery.ui.components.EmptyState
+import com.arslan.gallery.ui.components.rememberExtendedPadding
 import com.arslan.gallery.ui.components.rememberHaptics
 import com.arslan.gallery.ui.components.rememberScrollAwayBarState
 import com.arslan.gallery.ui.components.scrollAway
@@ -286,12 +285,12 @@ fun HomeScreen(viewModel: GalleryViewModel) {
             )
         },
     ) { padding ->
-        val layoutDirection = LocalLayoutDirection.current
-        val contentPadding = PaddingValues(
-            start = padding.calculateStartPadding(layoutDirection) + 12.dp,
-            end = padding.calculateEndPadding(layoutDirection) + 12.dp,
-            top = padding.calculateTopPadding() + 4.dp,
-            bottom = padding.calculateBottomPadding() + 120.dp,
+        val contentPadding = rememberExtendedPadding(
+            padding,
+            start = 12.dp,
+            top = 4.dp,
+            end = 12.dp,
+            bottom = 120.dp,
         )
 
         Box(Modifier.fillMaxSize()) {
@@ -310,7 +309,7 @@ fun HomeScreen(viewModel: GalleryViewModel) {
                         isRefreshing = isRefreshing,
                         modifier = Modifier
                             .align(Alignment.TopCenter)
-                            .padding(top = padding.calculateTopPadding()),
+                            .offset { IntOffset(0, padding.calculateTopPadding().roundToPx()) },
                     )
                 },
                 modifier = Modifier.fillMaxSize(),
