@@ -1,16 +1,14 @@
 package com.arslan.gallery.ui.screens
 
-import androidx.compose.material.icons.rounded.SelectAll
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.foundation.layout.Row
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.SizeTransform
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -19,22 +17,23 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteForever
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Photo
-import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.RestoreFromTrash
-import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.ViewModule
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -59,32 +58,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arslan.gallery.R
 import com.arslan.gallery.data.FAVORITES
 import com.arslan.gallery.data.TRASH
 import com.arslan.gallery.data.prefs
-import com.arslan.gallery.ui.LocalGalleryActivity
 import com.arslan.gallery.ui.GalleryViewModel
+import com.arslan.gallery.ui.LocalGalleryActivity
 import com.arslan.gallery.ui.LocalNavAnimatedVisibilityScope
 import com.arslan.gallery.ui.LocalNavigator
 import com.arslan.gallery.ui.LocalSharedTransitionScope
 import com.arslan.gallery.ui.LocalViewer
-import com.arslan.gallery.ui.theme.AlbumScreenExit
-import com.arslan.gallery.ui.theme.ContainerTransformBounds
 import com.arslan.gallery.ui.components.CenteredLoadingIndicator
 import com.arslan.gallery.ui.components.EmptyState
+import com.arslan.gallery.ui.components.rememberExtendedPadding
 import com.arslan.gallery.ui.components.rememberHaptics
+import com.arslan.gallery.ui.theme.AlbumScreenExit
+import com.arslan.gallery.ui.theme.ContainerTransformBounds
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -246,12 +245,11 @@ fun AlbumScreen(
             )
         },
     ) { padding ->
-        val layoutDirection = LocalLayoutDirection.current
-        val contentPadding = PaddingValues(
-            start = padding.calculateStartPadding(layoutDirection) + 4.dp,
-            end = padding.calculateEndPadding(layoutDirection) + 4.dp,
-            top = padding.calculateTopPadding(),
-            bottom = padding.calculateBottomPadding() + 112.dp,
+        val contentPadding = rememberExtendedPadding(
+            padding,
+            start = 4.dp,
+            end = 4.dp,
+            bottom = 112.dp,
         )
 
         Box(Modifier.fillMaxSize()) {
@@ -269,7 +267,7 @@ fun AlbumScreen(
                         isRefreshing = state.isRefreshing,
                         modifier = Modifier
                             .align(Alignment.TopCenter)
-                            .padding(top = padding.calculateTopPadding()),
+                            .offset { IntOffset(0, padding.calculateTopPadding().roundToPx()) },
                     )
                 },
             ) {
