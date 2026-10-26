@@ -40,15 +40,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -150,10 +150,8 @@ fun SelectionIndicator(
         animationSpec = spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium),
         label = "selectionFill",
     )
-    val check = rememberVectorPainter(Icons.Rounded.Check)
     val fillColor = MaterialTheme.colorScheme.primary
     val checkColor = MaterialTheme.colorScheme.onPrimary
-    val checkTint = remember(checkColor) { ColorFilter.tint(checkColor) }
 
     Spacer(
         modifier
@@ -169,12 +167,23 @@ fun SelectionIndicator(
                     drawCircle(Color.White, radius = radius - stroke / 2f, style = Stroke(stroke))
                     if (fraction > 0f) {
                         drawCircle(fillColor, radius = radius * fraction.coerceAtMost(1f))
-                        val iconSize = this.size.minDimension * 0.7f * fraction
-                        translate((this.size.width - iconSize) / 2f, (this.size.height - iconSize) / 2f) {
-                            with(check) { draw(Size(iconSize, iconSize), colorFilter = checkTint) }
-                        }
+                        drawCheck(checkColor, this.size.minDimension * 0.7f * fraction)
                     }
                 }
             },
     )
+}
+
+/**
+ * The rounded check mark, drawn as two strokes instead of a vector painter: building one is the
+ * costliest part of a thumbnail, and the grid creates thumbnails on every frame of a fast scroll.
+ */
+private fun DrawScope.drawCheck(color: Color, iconSize: Float) {
+    // Points of the Material check, on its 24 unit grid.
+    val unit = iconSize / 24f
+    val origin = center - Offset(iconSize / 2f, iconSize / 2f)
+    fun point(x: Float, y: Float) = origin + Offset(x * unit, y * unit)
+    val width = 2f * unit
+    drawLine(color, point(4.5f, 12.7f), point(9f, 17.2f), width, StrokeCap.Round)
+    drawLine(color, point(9f, 17.2f), point(19.8f, 6.4f), width, StrokeCap.Round)
 }
