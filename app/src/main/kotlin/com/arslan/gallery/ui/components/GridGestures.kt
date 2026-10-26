@@ -111,7 +111,8 @@ fun Modifier.dragToSelect(
     val currentSelection by rememberUpdatedState(selection)
     val currentOnSelectionChange by rememberUpdatedState(onSelectionChange)
     val layoutDirection = LocalLayoutDirection.current
-    val startPadding by rememberUpdatedState(contentPadding.calculateStartPadding(layoutDirection))
+    // Read only when needed, a Scaffold's padding changes on every frame its top bar collapses.
+    val currentContentPadding by rememberUpdatedState(contentPadding)
     val drag = remember { DragSelectState() }
 
     // Keeps scrolling while the finger rests near an edge, extending the selection to whatever
@@ -133,7 +134,7 @@ fun Modifier.dragToSelect(
         // Item offsets are relative to the content, i.e. without the grid's content padding.
         fun itemIndexAt(position: Offset): Int? {
             val info = gridState.layoutInfo
-            val padding = IntOffset(startPadding.roundToPx(), info.beforeContentPadding)
+            val padding = IntOffset(currentContentPadding.calculateStartPadding(layoutDirection).roundToPx(), info.beforeContentPadding)
             val point = position.round() - padding
             return info.visibleItemsInfo.firstOrNull { item ->
                 item.size.toIntRect().contains(point - item.offset)
