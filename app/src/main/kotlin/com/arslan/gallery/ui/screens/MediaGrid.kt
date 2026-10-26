@@ -2,7 +2,6 @@ package com.arslan.gallery.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -61,6 +60,7 @@ import com.arslan.gallery.data.prefs
 import com.arslan.gallery.ui.LocalViewer
 import com.arslan.gallery.ui.components.FastScroller
 import com.arslan.gallery.ui.components.SelectionIndicator
+import com.arslan.gallery.ui.components.animatedFloat
 import com.arslan.gallery.ui.components.dragToSelect
 import com.arslan.gallery.ui.components.pinchToChangeColumns
 import com.arslan.gallery.ui.components.pressScale
@@ -284,10 +284,9 @@ fun MediaThumbnail(
 
     // Only read while drawing: the bouncy inset never measures or recomposes anything, and its
     // overshoot past zero just grows the photo a hair instead of breaking the layout.
-    val selectedFraction = animateFloatAsState(
-        targetValue = if (selected) 1f else 0f,
+    val selectedFraction = animatedFloat(
+        target = if (selected) 1f else 0f,
         animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow),
-        label = "selected",
     )
 
     Box(
