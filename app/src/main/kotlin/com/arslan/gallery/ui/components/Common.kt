@@ -1,6 +1,8 @@
 package com.arslan.gallery.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
@@ -34,8 +36,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +58,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -140,15 +147,13 @@ fun SelectionIndicator(
     modifier: Modifier = Modifier,
     size: Dp = 24.dp,
 ) {
-    val shown = animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
+    val shown = animatedFloat(
+        target = if (visible) 1f else 0f,
         animationSpec = if (visible) spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium) else spring(stiffness = Spring.StiffnessHigh),
-        label = "selectionShown",
     )
-    val fill = animateFloatAsState(
-        targetValue = if (selected) 1f else 0f,
+    val fill = animatedFloat(
+        target = if (selected) 1f else 0f,
         animationSpec = spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium),
-        label = "selectionFill",
     )
     val fillColor = MaterialTheme.colorScheme.primary
     val checkColor = MaterialTheme.colorScheme.onPrimary
@@ -186,4 +191,19 @@ private fun DrawScope.drawCheck(color: Color, iconSize: Float) {
     val width = 2f * unit
     drawLine(color, point(4.5f, 12.7f), point(9f, 17.2f), width, StrokeCap.Round)
     drawLine(color, point(9f, 17.2f), point(19.8f, 6.4f), width, StrokeCap.Round)
+}
+
+/**
+ * Like animateFloatAsState, but starts no coroutine until [target] first changes. Thumbnails get
+ * created on every frame of a fast scroll and almost none of them ever animate.
+ */
+@Composable
+fun animatedFloat(target: Float, animationSpec: AnimationSpec<Float>): State<Float> {
+    val animatable = remember { Animatable(target) }
+    val scope = rememberCoroutineScope()
+    val currentSpec by rememberUpdatedState(animationSpec)
+    SideEffect {
+        if (animatable.targetValue != target) scope.launch { animatable.animateTo(target, currentSpec) }
+    }
+    return animatable.asState()
 }
