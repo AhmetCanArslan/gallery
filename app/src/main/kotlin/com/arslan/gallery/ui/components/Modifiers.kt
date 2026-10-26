@@ -2,20 +2,27 @@ package com.arslan.gallery.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.node.LayoutModifierNode
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -24,20 +31,73 @@ val PressSpring = spring<Float>(dampingRatio = 0.45f, stiffness = Spring.Stiffne
 
 /**
  * Scales the element down while pressed and springs it back with a little overshoot on release.
+ * A modifier node rather than `composed`, it's on every grid thumbnail and those get created on every
+ * frame of a fast scroll.
  */
 fun Modifier.pressScale(
     interactionSource: MutableInteractionSource,
     pressedScale: Float = 0.92f,
-): Modifier = composed {
-    val pressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) pressedScale else 1f,
-        animationSpec = PressSpring,
-        label = "pressScale",
-    )
-    graphicsLayer {
-        scaleX = scale
-        scaleY = scale
+): Modifier = this then PressScaleElement(interactionSource, pressedScale)
+
+private data class PressScaleElement(
+    val interactionSource: InteractionSource,
+    val pressedScale: Float,
+) : ModifierNodeElement<PressScaleNode>() {
+    override fun create() = PressScaleNode(interactionSource, pressedScale)
+
+    override fun update(node: PressScaleNode) = node.update(interactionSource, pressedScale)
+}
+
+private class PressScaleNode(
+    private var interactionSource: InteractionSource,
+    private var pressedScale: Float,
+) : Modifier.Node(), LayoutModifierNode {
+    private val scale = Animatable(1f)
+    private val presses = mutableListOf<PressInteraction.Press>()
+    private var collecting: Job? = null
+    private val layer: GraphicsLayerScope.() -> Unit = {
+        scaleX = scale.value
+        scaleY = scale.value
+    }
+
+    override fun onAttach() = collect()
+
+    override fun onDetach() {
+        presses.clear()
+        collecting = null
+    }
+
+    fun update(interactionSource: InteractionSource, pressedScale: Float) {
+        this.pressedScale = pressedScale
+        if (this.interactionSource == interactionSource) return
+        this.interactionSource = interactionSource
+        if (isAttached) {
+            collecting?.cancel()
+            presses.clear()
+            collect()
+        }
+    }
+
+    private fun collect() {
+        collecting = coroutineScope.launch {
+            interactionSource.interactions.collect { interaction ->
+                when (interaction) {
+                    is PressInteraction.Press -> presses += interaction
+                    is PressInteraction.Release -> presses -= interaction.press
+                    is PressInteraction.Cancel -> presses -= interaction.press
+                    else -> return@collect
+                }
+                val target = if (presses.isEmpty()) 1f else pressedScale
+                launch { scale.animateTo(target, PressSpring) }
+            }
+        }
+    }
+
+    override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
+        val placeable = measurable.measure(constraints)
+        return layout(placeable.width, placeable.height) {
+            placeable.placeWithLayer(0, 0, layerBlock = layer)
+        }
     }
 }
 
