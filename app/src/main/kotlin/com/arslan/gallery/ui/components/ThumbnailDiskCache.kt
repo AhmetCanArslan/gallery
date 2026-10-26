@@ -11,6 +11,7 @@ import coil3.intercept.Interceptor
 import coil3.memory.MemoryCache
 import coil3.request.ImageResult
 import coil3.request.SuccessResult
+import coil3.request.allowHardware
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -58,7 +59,10 @@ class ThumbnailDiskCache(context: Context) : Interceptor {
             withContext(Dispatchers.IO) { runCatching { cache.remove(key) } }
         }
 
-        val result = chain.proceed()
+        // Decoded straight into a software bitmap: copying a hardware one back for the JPEG is a GPU
+        // readback that runs on the render thread, and stalls the frames of the very scroll that loads it.
+        // Later loads come from the disk cache as hardware bitmaps again.
+        val result = chain.withRequest(request.newBuilder().allowHardware(false).build()).proceed()
         val bitmap = ((result as? SuccessResult)?.image as? BitmapImage)?.bitmap
         if (bitmap != null) writes.launch { write(key, bitmap) }
         return result
