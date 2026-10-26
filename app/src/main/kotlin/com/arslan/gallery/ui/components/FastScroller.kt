@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,8 +84,11 @@ fun FastScroller(
         }
     }
 
-    val fraction = if (dragging) dragFraction else scrollFraction
-    val label = labelFor((fraction * (totalItems - 1)).roundToInt())
+    // Read while laying out the thumb, so scrolling only moves it instead of recomposing the scroller
+    // for every row. The label only changes from one section to the next.
+    val fraction = { if (dragging) dragFraction else scrollFraction }
+    val currentLabelFor by rememberUpdatedState(labelFor)
+    val label by remember(totalItems) { derivedStateOf { currentLabelFor((fraction() * (totalItems - 1)).roundToInt()) } }
 
     val thumbHeight = 52.dp
     val thumbWidth by animateDpAsState(
@@ -101,7 +105,6 @@ fun FastScroller(
     ) {
         val density = LocalDensity.current
         val trackHeightPx = with(density) { (maxHeight - thumbHeight).toPx() }
-        val thumbOffsetPx = (trackHeightPx * fraction).roundToInt()
 
         AnimatedVisibility(
             visible = visible,
@@ -135,7 +138,7 @@ fun FastScroller(
                 Row(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset { IntOffset(0, thumbOffsetPx) },
+                        .offset { IntOffset(0, (trackHeightPx * fraction()).roundToInt()) },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     AnimatedVisibility(
