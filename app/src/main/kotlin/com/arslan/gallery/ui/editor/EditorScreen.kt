@@ -188,7 +188,7 @@ fun EditorScreen(
 /** Tap saves a copy; the arrow or a long press opens the copy / overwrite choice. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun SaveButton(
+internal fun SaveButton(
     enabled: Boolean,
     canOverwrite: Boolean,
     onSave: (overwrite: Boolean) -> Unit,
