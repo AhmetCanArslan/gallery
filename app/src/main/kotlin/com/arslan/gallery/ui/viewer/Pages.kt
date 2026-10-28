@@ -75,6 +75,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.annotation.OptIn as AndroidxOptIn
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -314,6 +316,9 @@ private fun VideoPlayer(medium: Medium, chromeVisible: Boolean, isDragging: Bool
             player.release()
         }
     }
+
+    // Stop playing once the app leaves the screen, e.g. on going home.
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { player.pause() }
 
     Box(Modifier.fillMaxSize()) {
         ContentFrame(
