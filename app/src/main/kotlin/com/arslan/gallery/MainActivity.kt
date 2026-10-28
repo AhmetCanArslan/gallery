@@ -40,6 +40,7 @@ import com.arslan.gallery.data.TYPE_IMAGE
 import com.arslan.gallery.data.TYPE_VIDEO
 import com.arslan.gallery.data.filename
 import com.arslan.gallery.data.hasAllFilesAccess
+import com.arslan.gallery.data.isVideoFile
 import com.arslan.gallery.data.mediaTypeOf
 import com.arslan.gallery.data.mimeType
 import com.arslan.gallery.data.prefs
@@ -466,7 +467,8 @@ open class MainActivity : ComponentActivity() {
     }
 
     fun edit(path: String) {
-        startActivity(Intent(this, EditorActivity::class.java).putExtra(EditorActivity.EXTRA_PATH, path))
+        val editor = if (path.isVideoFile()) VideoEditorActivity::class.java else EditorActivity::class.java
+        startActivity(Intent(this, editor).putExtra(EditorActivity.EXTRA_PATH, path))
     }
 
     fun setAs(path: String) {

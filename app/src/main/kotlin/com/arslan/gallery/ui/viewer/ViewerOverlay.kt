@@ -607,10 +607,10 @@ private fun ViewerBottomToolbar(medium: Medium, onDeleted: (Medium) -> Unit) {
             ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_tailscale), stringResource(R.string.send_via_tailscale)) {
                 activity.sendViaTailscale(listOf(medium.path))
             }
+            ToolbarIcon(Icons.Rounded.Edit, stringResource(R.string.edit)) {
+                activity.edit(medium.path)
+            }
             if (!medium.isVideo) {
-                ToolbarIcon(Icons.Rounded.Edit, stringResource(R.string.edit)) {
-                    activity.edit(medium.path)
-                }
                 ToolbarIcon(Icons.Rounded.ContentCopy, stringResource(R.string.copy_to_clipboard)) {
                     activity.copyToClipboard(medium.path)
                 }
