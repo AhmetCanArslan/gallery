@@ -195,7 +195,7 @@ fun ImagePage(
                 state = imageState,
                 contentScale = ContentScale.Fit,
                 onClick = { onTap() },
-                onDoubleClick = DoubleClickToZoomListener.cycle(maxZoomFactor = 2.5f),
+                onDoubleClick = DoubleClickToZoomListener.cycle(maxZoomFactor = 1.8f),
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = fullAlpha },
