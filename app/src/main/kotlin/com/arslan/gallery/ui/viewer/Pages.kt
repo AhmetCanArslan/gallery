@@ -89,6 +89,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.ZoomSpec
+import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -195,7 +196,7 @@ fun ImagePage(
                 state = imageState,
                 contentScale = ContentScale.Fit,
                 onClick = { onTap() },
-                onDoubleClick = DoubleClickToZoomListener.cycle(maxZoomFactor = 1.8f),
+                onDoubleClick = DoubleTapZoom,
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = fullAlpha },
@@ -205,6 +206,21 @@ fun ImagePage(
 }
 
 private const val FULL_IMAGE_FADE_MS = 200
+
+private const val DOUBLE_TAP_ZOOM = 2f
+
+// Telephoto's zoom factors are relative to the image's pixel size, so a fixed factor zooms far
+// deeper into large photos. This zooms relative to the size the photo is shown at instead.
+private val DoubleTapZoom = object : DoubleClickToZoomListener {
+    override suspend fun onDoubleClick(state: ZoomableState, centroid: Offset) {
+        if ((state.zoomFraction ?: 0f) > 0.05f) {
+            state.resetZoom()
+        } else {
+            val fitScale = state.contentTransformation.scale.scaleX
+            state.zoomTo(zoomFactor = fitScale * DOUBLE_TAP_ZOOM, centroid = centroid)
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
