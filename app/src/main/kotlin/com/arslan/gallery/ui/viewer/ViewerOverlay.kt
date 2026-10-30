@@ -350,7 +350,8 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
             isDragging = false
             when {
                 dragOffset.y > dismissThreshold || velocity.y > 1800f -> close(velocity)
-                dragOffset.y < -dismissThreshold * 0.8f || velocity.y < -1800f -> {
+                // A quick flick alone isn't enough to open the info, it has to travel a bit too.
+                dragOffset.y < -dismissThreshold * 0.8f || (velocity.y < -1800f && dragOffset.y < -dismissThreshold * 0.3f) -> {
                     showInfo = true
                     scope.launch {
                         animate(Offset.VectorConverter, dragOffset, Offset.Zero, animationSpec = spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMediumLow)) { v, _ -> dragOffset = v }
