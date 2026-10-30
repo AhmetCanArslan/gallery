@@ -20,6 +20,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemGestures
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
@@ -100,6 +102,7 @@ import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -290,6 +293,8 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
         SideEffect { viewer.corners.viewport = viewport.size }
         val heightPx = viewport.height
         val dismissThreshold = heightPx * 0.14f
+        // Swipes from the bottom edge belong to the system's home gesture, not to the info sheet.
+        val gestureZoneTop = heightPx - WindowInsets.systemGestures.getBottom(LocalDensity.current)
 
         // Only read while drawing, so dragging and flying never recompose the viewer.
         fun downProgress() = (dragOffset.y / (heightPx * 0.5f)).coerceIn(0f, 1f)
@@ -370,10 +375,11 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
             userScrollEnabled = !isDragging && !isOpening,
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
+                .pointerInput(gestureZoneTop) {
                     val slop = viewConfiguration.touchSlop
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                        if (down.position.y >= gestureZoneTop) return@awaitEachGesture
                         val zoomedNow = (zoomFractions[viewer.currentPath] ?: 0f) > 0.01f
                         if (zoomedNow) return@awaitEachGesture
 
