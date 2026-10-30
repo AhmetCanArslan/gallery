@@ -364,6 +364,9 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
             }
         }
 
+        // A zoomed in photo pans to its edges instead of sliding on to the neighbours.
+        val currentZoomed by remember { derivedStateOf { (zoomFractions[viewer.currentPath] ?: 0f) > 0.01f } }
+
         HorizontalPager(
             state = pagerState,
             key = { media.getOrNull(it)?.path ?: it },
@@ -373,7 +376,7 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
                 state = pagerState,
                 snapAnimationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow),
             ),
-            userScrollEnabled = !isDragging && !isOpening,
+            userScrollEnabled = !isDragging && !isOpening && !currentZoomed,
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(gestureZoneTop) {
