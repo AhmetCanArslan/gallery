@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.toShape
@@ -57,6 +58,13 @@ import com.arslan.gallery.ui.LocalGalleryActivity
 import com.arslan.gallery.ui.components.staggeredEntrance
 import java.io.File
 import java.text.DateFormat
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.Locale
 
@@ -73,7 +81,7 @@ private data class MediumDetails(
 @Composable
 fun MediumInfoSheet(medium: Medium, onDismiss: () -> Unit) {
     val activity = LocalGalleryActivity.current
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val details by produceState(MediumDetails(), medium.path) {
         value = withContext(Dispatchers.IO) { loadDetails(activity, medium) }
     }
@@ -83,6 +91,11 @@ fun MediumInfoSheet(medium: Medium, onDismiss: () -> Unit) {
     val time = if (timestamp > 0) DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(timestamp)) else ""
 
 
+    val scrollState = rememberScrollState()
+    val settled = sheetState.currentValue == SheetValue.Expanded
+    val scope = rememberCoroutineScope()
+    val currentSettled by rememberUpdatedState(settled)
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -91,7 +104,26 @@ fun MediumInfoSheet(medium: Medium, onDismiss: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+                // The sheet ignores drags while its open animation runs, so dismiss it ourselves.
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                        var dy = 0f
+                        var last = down.position.y
+                        while (!currentSettled) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!change.pressed) break
+                            dy += change.position.y - last
+                            last = change.position.y
+                            if (dy > viewConfiguration.touchSlop * 3) {
+                                scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
+                                break
+                            }
+                        }
+                    }
+                }
+                .then(if (settled) Modifier.verticalScroll(scrollState) else Modifier)
                 .padding(horizontal = 24.dp)
                 .navigationBarsPadding()
                 .padding(bottom = 24.dp),
