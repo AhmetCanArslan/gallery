@@ -213,7 +213,7 @@ private const val DOUBLE_TAP_ZOOM = 2f
 // deeper into large photos. This zooms relative to the size the photo is shown at instead.
 private val DoubleTapZoom = object : DoubleClickToZoomListener {
     override suspend fun onDoubleClick(state: ZoomableState, centroid: Offset) {
-        if ((state.zoomFraction ?: 0f) > 0.05f) {
+        if ((state.zoomFraction ?: 0f) > 0.001f) {
             state.resetZoom()
         } else {
             val fitScale = state.contentTransformation.scale.scaleX
