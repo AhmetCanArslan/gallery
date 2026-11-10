@@ -87,6 +87,15 @@ import coil3.compose.AsyncImagePainter
 import coil3.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableState
@@ -181,7 +190,37 @@ fun ImagePage(
     // bars are already on their way.
     val composeFull = rememberAfterFrames(if (inTransition) 3 else 0)
 
-    Box(Modifier.fillMaxSize()) {
+    // Pinching back out rarely lands exactly on the fitted size. Left a hair zoomed in, the photo can
+    // still pan a few pixels, and the next swipe goes to that instead of on to the neighbour. So once
+    // the fingers are up and the photo settled, a photo that's barely zoomed snaps back to fit.
+    val scope = rememberCoroutineScope()
+    var settleJob by remember { mutableStateOf<Job?>(null) }
+    var pageSize by remember { mutableStateOf(IntSize.Zero) }
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .onSizeChanged { pageSize = it }
+            .pointerInput(zoomableState) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    settleJob?.cancel()
+                    do {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                    } while (event.changes.any { it.pressed })
+                    settleJob = scope.launch {
+                        // Telephoto starts its own settling a moment after the release.
+                        withFrameNanos { }
+                        snapshotFlow { zoomableState.isAnimationRunning }.first { !it }
+                        val fraction = zoomableState.zoomFraction ?: return@launch
+                        val bounds = zoomableState.transformedContentBounds
+                        val nearlyFit = bounds.width <= pageSize.width * NEARLY_FIT &&
+                            bounds.height <= pageSize.height * NEARLY_FIT
+                        if (fraction > 0f && nearlyFit) zoomableState.resetZoom(animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
+                    }
+                }
+            },
+    ) {
         // The thumbnail stays below until the full image is completely opaque, so nothing ever
         // flashes through. It's hidden afterwards to not shine through transparent images.
         Poster(
@@ -206,6 +245,9 @@ fun ImagePage(
 }
 
 private const val FULL_IMAGE_FADE_MS = 200
+
+/** Shown at most this much larger than fitted on either side counts as not zoomed. */
+private const val NEARLY_FIT = 1.15f
 
 private const val DOUBLE_TAP_ZOOM = 2f
 

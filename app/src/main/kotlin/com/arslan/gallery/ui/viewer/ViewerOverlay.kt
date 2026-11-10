@@ -368,7 +368,7 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
         }
 
         // A zoomed in photo pans to its edges instead of sliding on to the neighbours.
-        val currentZoomed by remember { derivedStateOf { (zoomFractions[viewer.currentPath] ?: 0f) > 0.01f } }
+        val currentZoomed by remember { derivedStateOf { (zoomFractions[viewer.currentPath] ?: 0f) > ZOOMED_FRACTION } }
 
         HorizontalPager(
             state = pagerState,
@@ -387,7 +387,7 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
                         if (down.position.y >= gestureZoneTop) return@awaitEachGesture
-                        val zoomedNow = (zoomFractions[viewer.currentPath] ?: 0f) > 0.01f
+                        val zoomedNow = (zoomFractions[viewer.currentPath] ?: 0f) > ZOOMED_FRACTION
                         if (zoomedNow) return@awaitEachGesture
 
                         val tracker = VelocityTracker()
@@ -665,6 +665,12 @@ private fun ViewerBottomToolbar(medium: Medium, onDeleted: (Medium) -> Unit) {
         }
     }
 }
+
+/**
+ * Any zoom at all keeps the pager still, so a zoomed photo pans to its edges instead of paging. Barely
+ * zoomed photos snap back to fit once released (see ImagePage), so this never leaves one stuck.
+ */
+private const val ZOOMED_FRACTION = 0.001f
 
 /** Long enough for the full image to fade in first. */
 private const val NEIGHBOURS_DELAY_MS = 300L
