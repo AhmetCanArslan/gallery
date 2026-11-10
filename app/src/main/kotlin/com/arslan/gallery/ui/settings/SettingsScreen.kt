@@ -51,7 +51,6 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +63,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.arslan.gallery.ui.components.rememberCollapsingTopBarBehavior
 import com.arslan.gallery.R
 import com.arslan.gallery.data.THEME_DARK
 import com.arslan.gallery.data.THEME_LIGHT
@@ -82,7 +82,7 @@ fun SettingsScreen(viewModel: GalleryViewModel) {
     val activity = LocalGalleryActivity.current
     val navigator = LocalNavigator.current
     val prefs = remember { activity.prefs }
-    val topBarBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val topBarBehavior = rememberCollapsingTopBarBehavior()
 
     Scaffold(
         modifier = Modifier

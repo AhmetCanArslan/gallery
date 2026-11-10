@@ -31,7 +31,6 @@ import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,6 +44,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.arslan.gallery.ui.components.rememberCollapsingTopBarBehavior
 import com.arslan.gallery.R
 import com.arslan.gallery.data.filename
 import com.arslan.gallery.data.prefs
@@ -64,7 +64,7 @@ fun ManageFoldersScreen(viewModel: GalleryViewModel, hidden: Boolean) {
     val activity = LocalGalleryActivity.current
     val navigator = LocalNavigator.current
     val haptics = rememberHaptics()
-    val topBarBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val topBarBehavior = rememberCollapsingTopBarBehavior()
     var folders by remember { mutableStateOf<List<String>?>(null) }
 
     LaunchedEffect(hidden) {

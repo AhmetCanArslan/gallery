@@ -78,6 +78,7 @@ import com.arslan.gallery.ui.LocalNavAnimatedVisibilityScope
 import com.arslan.gallery.ui.LocalNavigator
 import com.arslan.gallery.ui.LocalSharedTransitionScope
 import com.arslan.gallery.ui.LocalViewer
+import com.arslan.gallery.ui.components.rememberCollapsingTopBarBehavior
 import com.arslan.gallery.ui.components.CenteredLoadingIndicator
 import com.arslan.gallery.ui.components.EmptyState
 import com.arslan.gallery.ui.components.rememberExtendedPadding
@@ -123,7 +124,7 @@ fun AlbumScreen(
         onChanged = viewModel::onArrangementChanged,
     )
 
-    val topBarBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val topBarBehavior = rememberCollapsingTopBarBehavior()
 
     val containerModifier = with(sharedScope) {
         Modifier.sharedBounds(
@@ -140,8 +141,7 @@ fun AlbumScreen(
 
     Scaffold(
         modifier = containerModifier
-            .fillMaxSize()
-            .nestedScroll(topBarBehavior.nestedScrollConnection),
+            .fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             // One bar that morphs into selection mode, so the grid below never jumps.
@@ -271,29 +271,32 @@ fun AlbumScreen(
                     )
                 },
             ) {
-                when {
-                    state.isLoading && state.items.isEmpty() -> CenteredLoadingIndicator()
-                    state.items.isEmpty() -> EmptyState(
-                        icon = if (isTrash) Icons.Rounded.DeleteOutline else Icons.Rounded.Photo,
-                        title = stringResource(if (isTrash) R.string.trash_empty else R.string.nothing_here_yet),
-                        message = stringResource(if (isTrash) R.string.trash_hint else R.string.no_media_with_filters),
-                    )
+                // Inside the pull to refresh, so the bar gets to expand before the indicator is pulled.
+                Box(Modifier.fillMaxSize().nestedScroll(topBarBehavior.nestedScrollConnection)) {
+                    when {
+                        state.isLoading && state.items.isEmpty() -> CenteredLoadingIndicator()
+                        state.items.isEmpty() -> EmptyState(
+                            icon = if (isTrash) Icons.Rounded.DeleteOutline else Icons.Rounded.Photo,
+                            title = stringResource(if (isTrash) R.string.trash_empty else R.string.nothing_here_yet),
+                            message = stringResource(if (isTrash) R.string.trash_hint else R.string.no_media_with_filters),
+                        )
 
-                    else -> MediaGrid(
-                        sourcePath = path,
-                        items = state.items,
-                        columns = columns,
-                        gridState = gridState,
-                        selection = { selection },
-                        onSelectionChange = { if (activity.pickRequest?.allowMultiple != false) selection = it },
-                        onOpen = { openMedium(activity, viewer, path, it) },
-                        onColumnsChange = { delta ->
-                            val old = columns
-                            columns = viewModel.updateMediaColumns(delta)
-                            old != columns
-                        },
-                        contentPadding = contentPadding,
-                    )
+                        else -> MediaGrid(
+                            sourcePath = path,
+                            items = state.items,
+                            columns = columns,
+                            gridState = gridState,
+                            selection = { selection },
+                            onSelectionChange = { if (activity.pickRequest?.allowMultiple != false) selection = it },
+                            onOpen = { openMedium(activity, viewer, path, it) },
+                            onColumnsChange = { delta ->
+                                val old = columns
+                                columns = viewModel.updateMediaColumns(delta)
+                                old != columns
+                            },
+                            contentPadding = contentPadding,
+                        )
+                    }
                 }
             }
 
