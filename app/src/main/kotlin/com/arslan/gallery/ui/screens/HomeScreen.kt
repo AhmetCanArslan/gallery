@@ -6,13 +6,11 @@ import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -100,6 +98,8 @@ import com.arslan.gallery.ui.ViewerController
 import com.arslan.gallery.ui.components.CenteredLoadingIndicator
 import com.arslan.gallery.ui.components.EmptyState
 import com.arslan.gallery.ui.components.rememberExtendedPadding
+import com.arslan.gallery.ui.components.TabCrossfade
+import com.arslan.gallery.ui.components.rememberCollapsingTopBarBehavior
 import com.arslan.gallery.ui.components.rememberHaptics
 import com.arslan.gallery.ui.components.rememberScrollAwayBarState
 import com.arslan.gallery.ui.components.scrollAway
@@ -171,7 +171,7 @@ fun HomeScreen(viewModel: GalleryViewModel) {
     // Keep the grid scrolled to the item shown in the viewer, so closing it can fly back into place.
     ScrollToViewerItem(viewer = viewer, sourcePath = ALL_MEDIA, allItems = photos.items, gridState = photosGridState)
 
-    val topBarBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val topBarBehavior = rememberCollapsingTopBarBehavior()
     val toolbarState = rememberScrollAwayBarState()
     // Bring a scrolled-away toolbar back whenever its contents change, so it never returns half hidden.
     LaunchedEffect(tab, selecting) {
@@ -182,21 +182,17 @@ fun HomeScreen(viewModel: GalleryViewModel) {
     // the previous tab's scroll state.
     LaunchedEffect(tab) {
         val grid = if (tab == TAB_PHOTOS) photosGridState else albumsGridState
-        val atTop = grid.firstVisibleItemIndex == 0 && grid.firstVisibleItemScrollOffset == 0
-        val barState = topBarBehavior.state
-        val target = if (atTop) 0f else barState.heightOffsetLimit
-        if (atTop) barState.contentOffset = 0f
-        if (barState.heightOffset != target) {
-            animate(barState.heightOffset, target, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) { value, _ ->
-                barState.heightOffset = value
-            }
+        if (grid.firstVisibleItemIndex == 0 && grid.firstVisibleItemScrollOffset == 0) {
+            topBarBehavior.state.contentOffset = 0f
+            topBarBehavior.expand()
+        } else {
+            topBarBehavior.collapse()
         }
     }
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .nestedScroll(topBarBehavior.nestedScrollConnection)
             .nestedScroll(toolbarState),
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
@@ -314,13 +310,13 @@ fun HomeScreen(viewModel: GalleryViewModel) {
                 },
                 modifier = Modifier.fillMaxSize(),
             ) {
-                AnimatedContent(
-                    targetState = tab,
-                    transitionSpec = {
-                        (fadeIn(tween(240, delayMillis = 60)) + scaleIn(spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow), initialScale = 0.96f)) togetherWith
-                            fadeOut(tween(100))
-                    },
-                    label = "tab",
+                // Inside the pull to refresh, so the bar gets to expand before the indicator is pulled.
+                TabCrossfade(
+                    selected = tab,
+                    count = 2,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .nestedScroll(topBarBehavior.nestedScrollConnection),
                 ) { currentTab ->
                     if (currentTab == TAB_PHOTOS) {
                         when {
@@ -403,24 +399,18 @@ fun HomeScreen(viewModel: GalleryViewModel) {
                         expanded = true,
                         colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
                     ) {
-                        ToolbarTab(
-                            selected = tab == TAB_PHOTOS,
-                            icon = Icons.Outlined.Photo,
-                            selectedIcon = Icons.Rounded.Photo,
-                            label = stringResource(R.string.tab_photos),
-                        ) {
-                            tab = TAB_PHOTOS
-                            prefs.startOnPhotos = true
+                        val photosLabel = stringResource(R.string.tab_photos)
+                        val albumsLabel = stringResource(R.string.tab_albums)
+                        val tabs = remember(photosLabel, albumsLabel) {
+                            listOf(
+                                ToolbarTabItem(photosLabel, Icons.Outlined.Photo, Icons.Rounded.Photo),
+                                ToolbarTabItem(albumsLabel, Icons.Outlined.PhotoLibrary, Icons.Rounded.PhotoLibrary),
+                            )
                         }
-                        ToolbarTab(
-                            selected = tab == TAB_ALBUMS,
-                            icon = Icons.Outlined.PhotoLibrary,
-                            selectedIcon = Icons.Rounded.PhotoLibrary,
-                            label = stringResource(R.string.tab_albums),
-                        ) {
-                            tab = TAB_ALBUMS
-                            prefs.startOnPhotos = false
-                        }
+                        ToolbarTabs(tabs = tabs, selectedIndex = tab, onSelect = { index ->
+                            tab = index
+                            prefs.startOnPhotos = index == TAB_PHOTOS
+                        })
                     }
 
                     2 -> MediaSelectionToolbar(

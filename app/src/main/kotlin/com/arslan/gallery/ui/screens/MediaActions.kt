@@ -4,19 +4,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Button
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.RestoreFromTrash
@@ -33,23 +23,17 @@ import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -161,59 +145,5 @@ fun ToolbarIcon(icon: ImageVector, label: String, enabled: Boolean = true, onCli
         modifier = Modifier.pressScale(interactionSource, 0.85f),
     ) {
         Icon(icon, contentDescription = label)
-    }
-}
-
-/**
- * Pill shaped tab used inside the floating toolbar. Both tabs always show their label so the toolbar
- * keeps a constant width; selection only morphs colors and gives the icon a springy pop.
- */
-@Composable
-fun ToolbarTab(
-    selected: Boolean,
-    icon: ImageVector,
-    selectedIcon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val background by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Transparent,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "tabBackground",
-    )
-    val content by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.onPrimaryContainer,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "tabContent",
-    )
-    val iconScale = remember { Animatable(1f) }
-    LaunchedEffect(selected) {
-        if (selected) {
-            iconScale.snapTo(0.7f)
-            iconScale.animateTo(1f, spring(dampingRatio = 0.4f, stiffness = Spring.StiffnessMedium))
-        }
-    }
-
-    Row(
-        modifier = Modifier
-            .pressScale(interactionSource, 0.92f)
-            .height(48.dp)
-            .background(background, CircleShape)
-            .clickable(interactionSource = interactionSource, indication = ripple(bounded = false), onClick = onClick)
-            .padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = if (selected) selectedIcon else icon,
-            contentDescription = null,
-            tint = content,
-            modifier = Modifier.graphicsLayer {
-                scaleX = iconScale.value
-                scaleY = iconScale.value
-            },
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(label, color = content, style = MaterialTheme.typography.labelLarge, maxLines = 1)
     }
 }
