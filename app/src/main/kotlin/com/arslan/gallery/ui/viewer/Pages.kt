@@ -97,6 +97,7 @@ import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
+import me.saket.telephoto.zoomable.EnabledZoomGestures
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
@@ -163,8 +164,28 @@ fun ImagePage(
     val imageState = rememberZoomableImageState(zoomableState)
     val zoomFraction = zoomableState.zoomFraction ?: 0f
 
+    // Set while a double tap zooms back out. A swipe that starts meanwhile would otherwise pan the
+    // still zoomed photo, which cancels the zoom out halfway and leaves the pager locked. Instead the
+    // photo counts as not zoomed right away and takes no gestures until it's back to fit.
+    var zoomingOut by remember { mutableStateOf(false) }
+    val doubleTapZoom = remember(zoomableState) {
+        DoubleClickToZoomListener { state, centroid ->
+            if ((state.zoomFraction ?: 0f) > 0.001f) {
+                zoomingOut = true
+                try {
+                    state.resetZoom()
+                } finally {
+                    zoomingOut = false
+                }
+            } else {
+                val fitScale = state.contentTransformation.scale.scaleX
+                state.zoomTo(zoomFactor = fitScale * DOUBLE_TAP_ZOOM, centroid = centroid)
+            }
+        }
+    }
+
     LaunchedEffect(zoomableState) {
-        snapshotFlow { (zoomableState.zoomFraction ?: 0f) to zoomableState.transformedContentBounds }
+        snapshotFlow { (if (zoomingOut) 0f else zoomableState.zoomFraction ?: 0f) to zoomableState.transformedContentBounds }
             .collect { (fraction, bounds) -> onZoomChange(fraction, bounds) }
     }
 
@@ -235,7 +256,8 @@ fun ImagePage(
                 state = imageState,
                 contentScale = ContentScale.Fit,
                 onClick = { onTap() },
-                onDoubleClick = DoubleTapZoom,
+                onDoubleClick = doubleTapZoom,
+                gestures = if (zoomingOut) EnabledZoomGestures.None else EnabledZoomGestures.ZoomAndPan,
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = fullAlpha },
@@ -249,20 +271,9 @@ private const val FULL_IMAGE_FADE_MS = 200
 /** Shown at most this much larger than fitted on either side counts as not zoomed. */
 private const val NEARLY_FIT = 1.15f
 
-private const val DOUBLE_TAP_ZOOM = 2f
-
 // Telephoto's zoom factors are relative to the image's pixel size, so a fixed factor zooms far
-// deeper into large photos. This zooms relative to the size the photo is shown at instead.
-private val DoubleTapZoom = object : DoubleClickToZoomListener {
-    override suspend fun onDoubleClick(state: ZoomableState, centroid: Offset) {
-        if ((state.zoomFraction ?: 0f) > 0.001f) {
-            state.resetZoom()
-        } else {
-            val fitScale = state.contentTransformation.scale.scaleX
-            state.zoomTo(zoomFactor = fitScale * DOUBLE_TAP_ZOOM, centroid = centroid)
-        }
-    }
-}
+// deeper into large photos. Double tap zooms relative to the size the photo is shown at instead.
+private const val DOUBLE_TAP_ZOOM = 2f
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
