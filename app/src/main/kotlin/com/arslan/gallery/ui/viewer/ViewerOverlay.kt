@@ -45,6 +45,7 @@ import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.DriveFileRenameOutline
 import androidx.compose.material.icons.rounded.Map
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PhotoAlbum
 import androidx.compose.material.icons.rounded.PhotoSizeSelectLarge
 import androidx.compose.material.icons.rounded.RestoreFromTrash
@@ -61,6 +62,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -122,7 +124,7 @@ import com.arslan.gallery.ui.GalleryViewModel
 import com.arslan.gallery.ui.LocalViewer
 import com.arslan.gallery.ui.components.rememberHaptics
 import com.arslan.gallery.ui.screens.MenuAction
-import com.arslan.gallery.ui.screens.OverflowMenu
+import com.arslan.gallery.ui.screens.InPlaceMenu
 import com.arslan.gallery.ui.screens.ToolbarIcon
 import java.text.DateFormat
 import java.util.Date
@@ -229,6 +231,7 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
 
     var chromeVisible by remember { mutableStateOf(true) }
     var showInfo by remember { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
     var isDragging by remember { mutableStateOf(false) }
     var predictiveBackProgress by remember { mutableFloatStateOf(0f) }
@@ -467,6 +470,7 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
                 ViewerTopBar(
                     medium = medium,
                     onBack = { close(Offset.Zero) },
+                    onMenu = { menuOpen = true },
                 )
             }
         }
@@ -484,6 +488,22 @@ private fun ViewerScreen(viewModel: GalleryViewModel) {
             currentMedium?.let { medium ->
                 ViewerBottomToolbar(medium = medium, onDeleted = slideAwayFrom)
             }
+        }
+
+        // Over everything else. Composed once the photo settled, so opening it never builds anything.
+        LaunchedEffect(chromeVisible, isDragging) {
+            if (!chromeVisible || isDragging) menuOpen = false
+        }
+        currentMedium?.let { medium ->
+            InPlaceMenu(
+                expanded = menuOpen,
+                onDismiss = { menuOpen = false },
+                actions = viewerMenuActions(medium),
+                prepared = neighboursReady,
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(top = 56.dp, end = 8.dp),
+            )
         }
     }
 
@@ -521,13 +541,10 @@ private fun Modifier.photoFrame(corners: FlightCorners, natural: () -> PhotoFram
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ViewerTopBar(medium: Medium, onBack: () -> Unit) {
-    val activity = LocalGalleryActivity.current
+private fun ViewerTopBar(medium: Medium, onBack: () -> Unit, onMenu: () -> Unit) {
     val timestamp = if (medium.taken > 0) medium.taken else medium.modified
     val date = remember(timestamp) { if (timestamp > 0) DateFormat.getDateInstance(DateFormat.LONG).format(Date(timestamp)) else null }
     val time = remember(timestamp) { DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(timestamp)) }
-    val isFile = !medium.isUri && !medium.isInTrash
-    val isImage = !medium.isVideo
 
     Row(
         modifier = Modifier
@@ -559,37 +576,43 @@ private fun ViewerTopBar(medium: Medium, onBack: () -> Unit) {
                 )
             }
         }
-        CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides Color.White) {
-            OverflowMenu(
-                actions = buildList {
-                    if (isFile && isImage) {
-                        add(MenuAction(stringResource(R.string.rotate_left), Icons.AutoMirrored.Rounded.RotateLeft) { activity.rotate(medium.path, -90) })
-                        add(MenuAction(stringResource(R.string.rotate_right), Icons.AutoMirrored.Rounded.RotateRight) { activity.rotate(medium.path, 90) })
-                    }
-                    if (!medium.isInTrash) {
-                        add(MenuAction(stringResource(R.string.set_as), Icons.Rounded.Wallpaper) { activity.setAs(medium.path) })
-                    }
-                    add(MenuAction(stringResource(R.string.open_with), Icons.AutoMirrored.Rounded.OpenInNew) { activity.openWith(medium.path) })
-                    if (isFile) {
-                        add(MenuAction(stringResource(R.string.rename), Icons.Rounded.DriveFileRenameOutline) { activity.rename(medium.path) })
-                        add(MenuAction(stringResource(R.string.copy_to), Icons.Rounded.ContentCopy) { activity.copyMove(listOf(medium.path), isCopy = true) })
-                        add(MenuAction(stringResource(R.string.move_to), Icons.AutoMirrored.Rounded.DriveFileMove) { activity.copyMove(listOf(medium.path), isCopy = false) })
-                        add(
-                            MenuAction(
-                                stringResource(if (medium.isHidden) R.string.unhide else R.string.hide),
-                                if (medium.isHidden) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
-                            ) { activity.setHidden(medium.path, !medium.isHidden) }
-                        )
-                    }
-                    add(MenuAction(stringResource(R.string.show_on_map), Icons.Rounded.Map) { activity.showOnMap(medium.path) })
-                    if (isFile && !activity.isStandaloneViewer) {
-                        add(MenuAction(stringResource(R.string.set_as_album_cover), Icons.Rounded.PhotoAlbum) {
-                            activity.setAlbumCover(medium.parentPath, AlbumCover.Photo(medium.path))
-                            activity.toast(R.string.album_cover_set)
-                        })
-                    }
-                },
+        IconButton(onClick = onMenu) {
+            Icon(Icons.Rounded.MoreVert, stringResource(R.string.more_options), tint = Color.White)
+        }
+    }
+}
+
+@Composable
+private fun viewerMenuActions(medium: Medium): List<MenuAction> {
+    val activity = LocalGalleryActivity.current
+    val isFile = !medium.isUri && !medium.isInTrash
+    val isImage = !medium.isVideo
+    return buildList {
+        if (isFile && isImage) {
+            add(MenuAction(stringResource(R.string.rotate_left), Icons.AutoMirrored.Rounded.RotateLeft) { activity.rotate(medium.path, -90) })
+            add(MenuAction(stringResource(R.string.rotate_right), Icons.AutoMirrored.Rounded.RotateRight) { activity.rotate(medium.path, 90) })
+        }
+        if (!medium.isInTrash) {
+            add(MenuAction(stringResource(R.string.set_as), Icons.Rounded.Wallpaper) { activity.setAs(medium.path) })
+        }
+        add(MenuAction(stringResource(R.string.open_with), Icons.AutoMirrored.Rounded.OpenInNew) { activity.openWith(medium.path) })
+        if (isFile) {
+            add(MenuAction(stringResource(R.string.rename), Icons.Rounded.DriveFileRenameOutline) { activity.rename(medium.path) })
+            add(MenuAction(stringResource(R.string.copy_to), Icons.Rounded.ContentCopy) { activity.copyMove(listOf(medium.path), isCopy = true) })
+            add(MenuAction(stringResource(R.string.move_to), Icons.AutoMirrored.Rounded.DriveFileMove) { activity.copyMove(listOf(medium.path), isCopy = false) })
+            add(
+                MenuAction(
+                    stringResource(if (medium.isHidden) R.string.unhide else R.string.hide),
+                    if (medium.isHidden) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
+                ) { activity.setHidden(medium.path, !medium.isHidden) }
             )
+        }
+        add(MenuAction(stringResource(R.string.show_on_map), Icons.Rounded.Map) { activity.showOnMap(medium.path) })
+        if (isFile && !activity.isStandaloneViewer) {
+            add(MenuAction(stringResource(R.string.set_as_album_cover), Icons.Rounded.PhotoAlbum) {
+                activity.setAlbumCover(medium.parentPath, AlbumCover.Photo(medium.path))
+                activity.toast(R.string.album_cover_set)
+            })
         }
     }
 }

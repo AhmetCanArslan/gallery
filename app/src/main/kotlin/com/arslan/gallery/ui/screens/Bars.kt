@@ -1,5 +1,18 @@
 package com.arslan.gallery.ui.screens
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
@@ -125,3 +138,96 @@ fun OverflowMenu(
         }
     }
 }
+
+/**
+ * An overflow menu drawn in the screen's own window rather than in a popup, place it last in a
+ * full screen Box. A popup has to create and lay out a whole window on the frame it opens, which
+ * eats the first frames of its animation. This one stays composed while hidden (once [prepared]),
+ * so opening it only animates a layer: it grows out of its [anchor] corner with a soft spring.
+ *
+ * Any touch outside of it closes it, without reaching what's below.
+ */
+@Composable
+fun BoxScope.InPlaceMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    actions: List<MenuAction>,
+    modifier: Modifier = Modifier,
+    prepared: Boolean = true,
+    anchor: Alignment = Alignment.TopEnd,
+) {
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(expanded) {
+        progress.animateTo(if (expanded) 1f else 0f, if (expanded) MenuOpenSpring else MenuCloseSpring)
+    }
+    BackHandler(enabled = expanded, onBack = onDismiss)
+
+    if (expanded) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false).consume()
+                        onDismiss()
+                        // The rest of this touch belongs to nobody.
+                        do {
+                            val event = awaitPointerEvent()
+                            event.changes.forEach { it.consume() }
+                        } while (event.changes.any { it.pressed })
+                    }
+                },
+        )
+    }
+
+    if (!prepared && !expanded && progress.value == 0f) return
+    val layoutDirection = LocalLayoutDirection.current
+    val origin = remember(anchor, layoutDirection) {
+        val bias = anchor.align(IntSize(2, 2), IntSize(4, 4), layoutDirection)
+        TransformOrigin(bias.x / 2f, bias.y / 2f)
+    }
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shadowElevation = 6.dp,
+        modifier = modifier
+            .align(anchor)
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) {
+                    if (progress.value > 0f) placeable.place(0, 0)
+                }
+            }
+            .graphicsLayer {
+                val p = progress.value
+                alpha = (p * 1.6f).coerceIn(0f, 1f)
+                transformOrigin = origin
+                scaleX = 0.8f + 0.2f * p
+                scaleY = 0.55f + 0.45f * p
+            },
+    ) {
+        Column(
+            Modifier
+                .width(IntrinsicSize.Max)
+                .padding(vertical = 8.dp)
+                .graphicsLayer {
+                    // The items trail the container a little, so they settle into an already open menu.
+                    alpha = ((progress.value - 0.35f) / 0.65f).coerceIn(0f, 1f)
+                },
+        ) {
+            actions.forEach { action ->
+                DropdownMenuItem(
+                    text = { Text(action.label) },
+                    leadingIcon = action.icon?.let { { Icon(it, contentDescription = null) } },
+                    onClick = {
+                        onDismiss()
+                        action.onClick()
+                    },
+                )
+            }
+        }
+    }
+}
+
+private val MenuOpenSpring = spring<Float>(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow)
+private val MenuCloseSpring = spring<Float>(dampingRatio = 1f, stiffness = Spring.StiffnessMedium)
